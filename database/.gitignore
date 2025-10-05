@@ -1,0 +1,4 @@
+*.sqlite*
+
+data/
+original_data/
