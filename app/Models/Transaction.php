@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Transaction extends Model
 {
     protected $fillable = [
-        'date', 'amount', 'transaction_type_id', 'entity_id', 'parent_id'
+        'date', 'amount', 'transaction_type_id', 'entity_id', 'parent_id',
     ];
 
     public function type()
@@ -29,5 +29,9 @@ class Transaction extends Model
     {
         return $this->hasMany(Transaction::class, 'parent_id');
     }
-}
 
+    public function debt()
+    {
+        return $this->hasOne(Debt::class);
+    }
+}

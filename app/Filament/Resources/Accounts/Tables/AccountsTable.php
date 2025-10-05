@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Filament\Resources\Accounts\Tables;
+
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Table;
+
+class AccountsTable
+{
+    public static function configure(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('name')
+                    ->label('Kontoname')
+                    ->searchable()
+                    ->sortable()
+                    ->icon('heroicon-o-credit-card')
+                    ->weight('bold'),
+                
+                TextColumn::make('bank_name')
+                    ->label('Bank')
+                    ->searchable()
+                    ->sortable()
+                    ->icon('heroicon-o-building-library'),
+                
+                TextColumn::make('account_type')
+                    ->label('Typ')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'checking' => '🏦 Girokonto',
+                        'savings' => '💰 Sparkonto',
+                        'investment' => '📈 Anlagekonto',
+                        'other' => '📄 Sonstiges',
+                        default => $state,
+                    })
+                    ->sortable(),
+                
+                IconColumn::make('is_trade_republic')
+                    ->label('Trade Republic')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('gray'),
+                
+                TextColumn::make('debts_count')
+                    ->label('Verknüpfte Schulden')
+                    ->counts('debts')
+                    ->sortable()
+                    ->icon('heroicon-o-currency-dollar')
+                    ->color('info'),
+                
+                TextColumn::make('created_at')
+                    ->label('Erstellt am')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                //
+            ])
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('name');
+    }
+}

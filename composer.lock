@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e33558afeb8ffa9941f72f06b034a57f",
+    "content-hash": "c6857525dbe169dc7b0e56069f58961f",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -1972,6 +1972,81 @@
                 }
             ],
             "time": "2025-08-22T14:27:06+00:00"
+        },
+        {
+            "name": "jaocero/radio-deck",
+            "version": "v2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/199ocero/radio-deck.git",
+                "reference": "15b72137cdc0e91e8f0b98f1f0f7d3f0e1c209b4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/199ocero/radio-deck/zipball/15b72137cdc0e91e8f0b98f1f0f7d3f0e1c209b4",
+                "reference": "15b72137cdc0e91e8f0b98f1f0f7d3f0e1c209b4",
+                "shasum": ""
+            },
+            "require": {
+                "filament/forms": "^4.0",
+                "illuminate/contracts": "^11.0|^12.0",
+                "php": "^8.2",
+                "spatie/laravel-package-tools": "^1.15.0"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.24",
+                "nunomaduro/collision": "^8.1",
+                "orchestra/testbench": "^9.0",
+                "pestphp/pest": "^2.0",
+                "pestphp/pest-plugin-arch": "^2.0",
+                "pestphp/pest-plugin-laravel": "^2.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "JaOcero\\RadioDeck\\RadioDeckServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "JaOcero\\RadioDeck\\": "src/",
+                    "JaOcero\\RadioDeck\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jay-Are Ocero",
+                    "email": "199ocero@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Turn filament default radio button into a selectable card with icons, title and description.",
+            "homepage": "https://github.com/jaocero/radio-deck",
+            "keywords": [
+                "filament-form",
+                "filament-plugin",
+                "filamentphp",
+                "jaocero",
+                "laravel",
+                "radio-deck"
+            ],
+            "support": {
+                "issues": "https://github.com/jaocero/radio-deck/issues",
+                "source": "https://github.com/jaocero/radio-deck"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/jaocero",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-09-14T12:02:21+00:00"
         },
         {
             "name": "kirschbaum-development/eloquent-power-joins",
