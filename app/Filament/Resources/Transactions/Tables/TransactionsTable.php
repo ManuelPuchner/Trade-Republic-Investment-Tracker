@@ -190,20 +190,215 @@ class TransactionsTable
                                 \pxlrbt\FilamentExcel\Columns\Column::make('notes')->heading('Notizen'),
                             ]),
                     ]),
-                Action::make('exportOverview')
+                \Filament\Actions\ActionGroup::make([
+                    Action::make('exportOverviewCSV')
+                        ->label('Export als CSV')
+                        ->icon('heroicon-o-document-text')
+                        ->color('success')
+                        ->action(function ($livewire) {
+                            $query = $livewire->getFilteredTableQuery();
+                            $transactions = $query->with(['type', 'account', 'category'])->get();
+                            
+                            return \Maatwebsite\Excel\Facades\Excel::download(
+                                new \App\Exports\TransactionsOverviewExport($transactions),
+                                'transactions-overview-' . date('Y-m-d') . '.csv',
+                                \Maatwebsite\Excel\Excel::CSV
+                            );
+                        }),
+                    Action::make('exportOverviewPDF')
+                        ->label('Export als PDF')
+                        ->icon('heroicon-o-document')
+                        ->color('warning')
+                        ->action(function ($livewire) {
+                            $query = $livewire->getFilteredTableQuery();
+                            $transactions = $query->with(['type', 'account', 'category'])->get();
+                            
+                            // Calculate statistics (same as TransactionsOverviewExport)
+                            $totalTransactions = $transactions->count();
+                            $totalAmount = $transactions->sum('amount');
+                            
+                            // Calculate Einnahmen and Ausgaben separately
+                            $einzahlungen = $transactions->where('type.name', 'Einzahlung')->sum('amount');
+                            $verkaeufe = $transactions->where('type.name', 'Verkauf')->sum('amount');
+                            $zinsen = $transactions->where('type.name', 'Zinsen')->sum('amount');
+                            $dividenden = $transactions->where('type.name', 'Dividenden')->sum('amount');
+                            
+                            $kaeufe = abs($transactions->where('type.name', 'Kauf')->sum('amount'));
+                            $ausgaben = abs($transactions->where('type.name', 'Ausgabe')->sum('amount'));
+                            $savebackSteuer = abs($transactions->where('type.name', 'Saveback Steuer')->sum('amount'));
+                            
+                            $income = $einzahlungen + $verkaeufe + $zinsen + $dividenden;
+                            $expenses = $kaeufe + $ausgaben + $savebackSteuer;
+                            $kassenbestand = $income - $expenses;
+                            
+                            $avgAmount = $totalTransactions > 0 ? $totalAmount / $totalTransactions : 0;
+                            $maxAmount = $transactions->max('amount') ?? 0;
+                            $minAmount = $transactions->min('amount') ?? 0;
+                            
+                            // Group by type
+                            $byType = $transactions->groupBy('type.name')->map(function ($group) {
+                                return [
+                                    'count' => $group->count(),
+                                    'sum' => $group->sum('amount'),
+                                    'avg' => $group->avg('amount'),
+                                ];
+                            })->toArray();
+                            
+                            // Group by account
+                            $byAccount = $transactions->groupBy('account.name')->map(function ($group) {
+                                return [
+                                    'count' => $group->count(),
+                                    'sum' => $group->sum('amount'),
+                                ];
+                            })->toArray();
+                            
+                            // Group by category
+                            $byCategory = $transactions->filter(fn ($t) => $t->category)->groupBy('category.name')->map(function ($group) {
+                                return [
+                                    'count' => $group->count(),
+                                    'sum' => $group->sum('amount'),
+                                ];
+                            })->toArray();
+                            
+                            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.transactions-overview-pdf', [
+                                'totalTransactions' => $totalTransactions,
+                                'totalAmount' => $totalAmount,
+                                'income' => $income,
+                                'expenses' => $expenses,
+                                'kassenbestand' => $kassenbestand,
+                                'einzahlungen' => $einzahlungen,
+                                'verkaeufe' => $verkaeufe,
+                                'zinsen' => $zinsen,
+                                'dividenden' => $dividenden,
+                                'kaeufe' => $kaeufe,
+                                'ausgaben' => $ausgaben,
+                                'savebackSteuer' => $savebackSteuer,
+                                'avgAmount' => $avgAmount,
+                                'maxAmount' => $maxAmount,
+                                'minAmount' => $minAmount,
+                                'byType' => $byType,
+                                'byAccount' => $byAccount,
+                                'byCategory' => $byCategory,
+                            ]);
+                            
+                            return response()->streamDownload(function () use ($pdf) {
+                                echo $pdf->output();
+                            }, 'transactions-overview-' . date('Y-m-d') . '.pdf');
+                        }),
+                    Action::make('exportDetailedPDF')
+                        ->label('Export mit Details')
+                        ->icon('heroicon-o-document-text')
+                        ->color('info')
+                        ->form([
+                            \Filament\Forms\Components\DatePicker::make('date_from')
+                                ->label('Von Datum')
+                                ->default(now()->startOfMonth())
+                                ->maxDate(now()),
+                            \Filament\Forms\Components\DatePicker::make('date_to')
+                                ->label('Bis Datum')
+                                ->default(now())
+                                ->maxDate(now()),
+                            \Filament\Forms\Components\Toggle::make('include_table')
+                                ->label('Komplette Tabelle einschließen')
+                                ->helperText('Fügt alle Transaktionen des Zeitraums zur PDF hinzu')
+                                ->default(false),
+                        ])
+                        ->action(function ($livewire, array $data) {
+                            $query = $livewire->getFilteredTableQuery();
+                            
+                            // Apply date filters
+                            if (isset($data['date_from'])) {
+                                $query->whereDate('date', '>=', $data['date_from']);
+                            }
+                            if (isset($data['date_to'])) {
+                                $query->whereDate('date', '<=', $data['date_to']);
+                            }
+                            
+                            // Sort by date descending
+                            $query->orderBy('date', 'desc')->orderBy('id', 'desc');
+                            
+                            $transactions = $query->with(['type', 'account', 'category', 'entity', 'toAccount'])->get();
+                            
+                            // Calculate statistics
+                            $totalTransactions = $transactions->count();
+                            $totalAmount = $transactions->sum('amount');
+                            
+                            $einzahlungen = $transactions->where('type.name', 'Einzahlung')->sum('amount');
+                            $verkaeufe = $transactions->where('type.name', 'Verkauf')->sum('amount');
+                            $zinsen = $transactions->where('type.name', 'Zinsen')->sum('amount');
+                            $dividenden = $transactions->where('type.name', 'Dividenden')->sum('amount');
+                            
+                            $kaeufe = abs($transactions->where('type.name', 'Kauf')->sum('amount'));
+                            $ausgaben = abs($transactions->where('type.name', 'Ausgabe')->sum('amount'));
+                            $savebackSteuer = abs($transactions->where('type.name', 'Saveback Steuer')->sum('amount'));
+                            
+                            $income = $einzahlungen + $verkaeufe + $zinsen + $dividenden;
+                            $expenses = $kaeufe + $ausgaben + $savebackSteuer;
+                            $kassenbestand = $income - $expenses;
+                            
+                            $avgAmount = $totalTransactions > 0 ? $totalAmount / $totalTransactions : 0;
+                            $maxAmount = $transactions->max('amount') ?? 0;
+                            $minAmount = $transactions->min('amount') ?? 0;
+                            
+                            // Group by type
+                            $byType = $transactions->groupBy('type.name')->map(function ($group) {
+                                return [
+                                    'count' => $group->count(),
+                                    'sum' => $group->sum('amount'),
+                                    'avg' => $group->avg('amount'),
+                                ];
+                            })->toArray();
+                            
+                            // Group by account
+                            $byAccount = $transactions->groupBy('account.name')->map(function ($group) {
+                                return [
+                                    'count' => $group->count(),
+                                    'sum' => $group->sum('amount'),
+                                ];
+                            })->toArray();
+                            
+                            // Group by category
+                            $byCategory = $transactions->filter(fn ($t) => $t->category)->groupBy('category.name')->map(function ($group) {
+                                return [
+                                    'count' => $group->count(),
+                                    'sum' => $group->sum('amount'),
+                                ];
+                            })->toArray();
+                            
+                            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.transactions-detailed-pdf', [
+                                'totalTransactions' => $totalTransactions,
+                                'totalAmount' => $totalAmount,
+                                'income' => $income,
+                                'expenses' => $expenses,
+                                'kassenbestand' => $kassenbestand,
+                                'einzahlungen' => $einzahlungen,
+                                'verkaeufe' => $verkaeufe,
+                                'zinsen' => $zinsen,
+                                'dividenden' => $dividenden,
+                                'kaeufe' => $kaeufe,
+                                'ausgaben' => $ausgaben,
+                                'savebackSteuer' => $savebackSteuer,
+                                'avgAmount' => $avgAmount,
+                                'maxAmount' => $maxAmount,
+                                'minAmount' => $minAmount,
+                                'byType' => $byType,
+                                'byAccount' => $byAccount,
+                                'byCategory' => $byCategory,
+                                'includeTable' => $data['include_table'] ?? false,
+                                'transactions' => $data['include_table'] ? $transactions : collect(),
+                                'dateFrom' => $data['date_from'] ?? null,
+                                'dateTo' => $data['date_to'] ?? null,
+                            ]);
+                            
+                            return response()->streamDownload(function () use ($pdf) {
+                                echo $pdf->output();
+                            }, 'transactions-detailed-' . date('Y-m-d') . '.pdf');
+                        }),
+                ])
                     ->label('Export Übersicht')
                     ->icon('heroicon-o-chart-bar')
                     ->color('success')
-                    ->action(function ($livewire) {
-                        $query = $livewire->getFilteredTableQuery();
-                        $transactions = $query->with(['type', 'account', 'category'])->get();
-                        
-                        return \Maatwebsite\Excel\Facades\Excel::download(
-                            new \App\Exports\TransactionsOverviewExport($transactions),
-                            'transactions-overview-' . date('Y-m-d') . '.csv',
-                            \Maatwebsite\Excel\Excel::CSV
-                        );
-                    }),
+                    ->button(),
                 BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->label('Export Ausgewählte')

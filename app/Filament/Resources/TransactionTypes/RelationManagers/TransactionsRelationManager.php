@@ -4,14 +4,17 @@ namespace App\Filament\Resources\TransactionTypes\RelationManagers;
 
 use App\Filament\Resources\Transactions\TransactionResource;
 use App\Filament\Resources\TransactionTypes\TransactionTypeResource;
+use App\Models\Account;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
 class TransactionsRelationManager extends RelationManager
@@ -90,6 +93,15 @@ class TransactionsRelationManager extends RelationManager
                     ->color(fn ($record): string => $record->type->color ?? 'gray'),
             ])
             ->defaultSort('date', 'desc')
+            ->filters([
+                // Add filter groups as tabs
+            ])
+            ->filtersTriggerAction(
+                fn ($action) => $action
+                    ->button()
+                    ->label('Filter'),
+            )
+            ->filtersLayout(\Filament\Tables\Enums\FiltersLayout::AboveContentCollapsible)
             ->headerActions([
                 CreateAction::make(),
             ])
@@ -102,5 +114,27 @@ class TransactionsRelationManager extends RelationManager
                     ->url(fn ($record) => TransactionResource::getUrl('edit', ['record' => $record])),
 
             ]);
+    }
+
+    public function getTabs(): array
+    {
+        $tabs = [
+            'all' => Tab::make('Alle')
+                ->badge(fn () => $this->getOwnerRecord()->transactions()->count()),
+        ];
+
+        // Get all accounts that have transactions for this transaction type
+        $accounts = Account::whereHas('transactions', function (EloquentBuilder $query) {
+            $query->where('transaction_type_id', $this->getOwnerRecord()->id);
+        })->orderBy('name')->get();
+
+        foreach ($accounts as $account) {
+            $tabs[$account->id] = Tab::make($account->name)
+                ->badge(fn () => $this->getOwnerRecord()->transactions()->where('account_id', $account->id)->count())
+                ->icon('heroicon-o-credit-card')
+                ->modifyQueryUsing(fn (EloquentBuilder $query) => $query->where('account_id', $account->id));
+        }
+
+        return $tabs;
     }
 }

@@ -154,20 +154,84 @@ class DebtsTable
                                 \pxlrbt\FilamentExcel\Columns\Column::make('paid_at')->heading('Bezahlt am'),
                             ]),
                     ]),
-                Action::make('exportOverview')
+                \Filament\Actions\ActionGroup::make([
+                    Action::make('exportOverviewCSV')
+                        ->label('Export als CSV')
+                        ->icon('heroicon-o-document-text')
+                        ->color('success')
+                        ->action(function ($livewire) {
+                            $query = $livewire->getFilteredTableQuery();
+                            $debts = $query->with(['debtor', 'account'])->get();
+                            
+                            return \Maatwebsite\Excel\Facades\Excel::download(
+                                new \App\Exports\DebtsOverviewExport($debts),
+                                'debts-overview-' . date('Y-m-d') . '.csv',
+                                \Maatwebsite\Excel\Excel::CSV
+                            );
+                        }),
+                    Action::make('exportOverviewPDF')
+                        ->label('Export als PDF')
+                        ->icon('heroicon-o-document')
+                        ->color('warning')
+                        ->action(function ($livewire) {
+                            $query = $livewire->getFilteredTableQuery();
+                            $debts = $query->with(['debtor', 'account'])->get();
+                            
+                            // Calculate statistics
+                            $totalDebts = $debts->count();
+                            $totalAmount = $debts->sum('amount');
+                            $avgAmount = $totalDebts > 0 ? $totalAmount / $totalDebts : 0;
+                            $maxAmount = $debts->max('amount') ?? 0;
+                            $minAmount = $debts->min('amount') ?? 0;
+                            
+                            // Open vs Paid debts
+                            $openDebts = $debts->where('is_paid', false);
+                            $paidDebts = $debts->where('is_paid', true);
+                            $openDebtsCount = $openDebts->count();
+                            $paidDebtsCount = $paidDebts->count();
+                            $openDebtsAmount = $openDebts->sum('amount');
+                            $paidDebtsAmount = $paidDebts->sum('amount');
+                            
+                            // Group by debtor
+                            $byDebtor = $debts->groupBy('debtor.name')->map(function ($group) {
+                                return [
+                                    'count' => $group->count(),
+                                    'sum' => $group->sum('amount'),
+                                ];
+                            })->toArray();
+                            
+                            // Group by type
+                            $byType = $debts->groupBy('type')->map(function ($group) {
+                                return [
+                                    'count' => $group->count(),
+                                    'sum' => $group->sum('amount'),
+                                    'avg' => $group->avg('amount'),
+                                ];
+                            })->toArray();
+                            
+                            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.debts-overview-pdf', [
+                                'totalDebts' => $totalDebts,
+                                'totalAmount' => $totalAmount,
+                                'avgAmount' => $avgAmount,
+                                'maxAmount' => $maxAmount,
+                                'minAmount' => $minAmount,
+                                'openDebtsCount' => $openDebtsCount,
+                                'paidDebtsCount' => $paidDebtsCount,
+                                'openDebtsAmount' => $openDebtsAmount,
+                                'paidDebtsAmount' => $paidDebtsAmount,
+                                'byDebtor' => $byDebtor,
+                                'byType' => $byType,
+                            ]);
+                            
+                            return response()->streamDownload(function () use ($pdf) {
+                                echo $pdf->output();
+                            }, 'debts-overview-' . date('Y-m-d') . '.pdf');
+                        }),
+                ])
                     ->label('Export Übersicht')
                     ->icon('heroicon-o-chart-bar')
                     ->color('success')
-                    ->action(function ($livewire) {
-                        $query = $livewire->getFilteredTableQuery();
-                        $debts = $query->with(['debtor', 'account'])->get();
-                        
-                        return \Maatwebsite\Excel\Facades\Excel::download(
-                            new \App\Exports\DebtsOverviewExport($debts),
-                            'debts-overview-' . date('Y-m-d') . '.csv',
-                            \Maatwebsite\Excel\Excel::CSV
-                        );
-                    }),
+                    ->button(),
                 BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->label('Export Ausgewählte')

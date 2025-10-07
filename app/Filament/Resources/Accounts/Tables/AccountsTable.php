@@ -105,20 +105,73 @@ class AccountsTable
                                 \pxlrbt\FilamentExcel\Columns\Column::make('is_trade_republic')->heading('Trade Republic'),
                             ]),
                     ]),
-                Action::make('exportOverview')
+                \Filament\Actions\ActionGroup::make([
+                    Action::make('exportOverviewCSV')
+                        ->label('Export als CSV')
+                        ->icon('heroicon-o-document-text')
+                        ->color('success')
+                        ->action(function ($livewire) {
+                            $query = $livewire->getFilteredTableQuery();
+                            $accounts = $query->get();
+                            
+                            return \Maatwebsite\Excel\Facades\Excel::download(
+                                new \App\Exports\AccountsOverviewExport($accounts),
+                                'accounts-overview-' . date('Y-m-d') . '.csv',
+                                \Maatwebsite\Excel\Excel::CSV
+                            );
+                        }),
+                    Action::make('exportOverviewPDF')
+                        ->label('Export als PDF')
+                        ->icon('heroicon-o-document')
+                        ->color('warning')
+                        ->action(function ($livewire) {
+                            $query = $livewire->getFilteredTableQuery();
+                            $accounts = $query->get();
+                            
+                            // Calculate statistics using current_balance accessor
+                            $totalAccounts = $accounts->count();
+                            $totalBalance = $accounts->sum(fn($account) => $account->current_balance);
+                            $avgBalance = $totalAccounts > 0 ? $totalBalance / $totalAccounts : 0;
+                            $balances = $accounts->pluck('current_balance');
+                            $maxBalance = $balances->max() ?? 0;
+                            $minBalance = $balances->min() ?? 0;
+                            
+                            // Group by type
+                            $byType = $accounts->groupBy('account_type')->map(function ($group) {
+                                return [
+                                    'count' => $group->count(),
+                                    'sum' => $group->sum(fn($account) => $account->current_balance),
+                                    'avg' => $group->avg(fn($account) => $account->current_balance),
+                                ];
+                            })->toArray();
+                            
+                            // Group by bank
+                            $byBank = $accounts->groupBy('bank_name')->map(function ($group) {
+                                return [
+                                    'count' => $group->count(),
+                                    'sum' => $group->sum(fn($account) => $account->current_balance),
+                                ];
+                            })->toArray();
+                            
+                            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('exports.accounts-overview-pdf', [
+                                'totalAccounts' => $totalAccounts,
+                                'totalBalance' => $totalBalance,
+                                'avgBalance' => $avgBalance,
+                                'maxBalance' => $maxBalance,
+                                'minBalance' => $minBalance,
+                                'byType' => $byType,
+                                'byBank' => $byBank,
+                            ]);
+                            
+                            return response()->streamDownload(function () use ($pdf) {
+                                echo $pdf->output();
+                            }, 'accounts-overview-' . date('Y-m-d') . '.pdf');
+                        }),
+                ])
                     ->label('Export Übersicht')
                     ->icon('heroicon-o-chart-bar')
                     ->color('success')
-                    ->action(function ($livewire) {
-                        $query = $livewire->getFilteredTableQuery();
-                        $accounts = $query->get();
-                        
-                        return \Maatwebsite\Excel\Facades\Excel::download(
-                            new \App\Exports\AccountsOverviewExport($accounts),
-                            'accounts-overview-' . date('Y-m-d') . '.csv',
-                            \Maatwebsite\Excel\Excel::CSV
-                        );
-                    }),
+                    ->button(),
                 BulkActionGroup::make([
                     ExportBulkAction::make()
                         ->label('Export Ausgewählte')
