@@ -3,17 +3,17 @@
 namespace App\Filament\Resources\Debts\Tables;
 
 use App\Models\Debt;
+use Filament\Tables\Table;
 use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Tables\Columns\BadgeColumn;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TernaryFilter;
-use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\TernaryFilter;
 
 class DebtsTable
 {
@@ -49,9 +49,10 @@ class DebtsTable
                     })
                     ->icon('heroicon-o-document-text'),
 
-                BadgeColumn::make('is_paid')
+                TextColumn::make('is_paid')
                     ->label('Status')
                     ->getStateUsing(fn ($record): string => $record->is_paid ? 'Bezahlt' : 'Offen')
+                    ->badge()
                     ->colors([
                         'success' => 'Bezahlt',
                         'danger' => 'Offen',
@@ -61,10 +62,11 @@ class DebtsTable
                         'heroicon-o-clock' => 'Offen',
                     ]),
 
-                BadgeColumn::make('payment_method')
+                TextColumn::make('payment_method')
                     ->label('Zahlungsart')
                     ->getStateUsing(fn ($record): ?string => $record->payment_method ? Debt::getPaymentMethods()[$record->payment_method] ?? $record->payment_method : null
                     )
+                    ->badge()
                     ->colors([
                         'success' => fn ($state): bool => $state === 'Bar',
                         'info' => fn ($state): bool => $state === 'Banküberweisung',
