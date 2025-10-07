@@ -12,6 +12,10 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use pxlrbt\FilamentExcel\Actions\ExportAction;
+use pxlrbt\FilamentExcel\Actions\ExportBulkAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Filament\Actions\Action;
 
 class TransactionsTable
 {
@@ -167,7 +171,48 @@ class TransactionsTable
                 ViewAction::make(),
             ])
             ->toolbarActions([
+                ExportAction::make()
+                    ->label('Export CSV')
+                    ->exports([
+                        ExcelExport::make('table')
+                            ->fromTable()
+                            ->withFilename(fn () => 'transactions-' . date('Y-m-d'))
+                            ->withWriterType(\Maatwebsite\Excel\Excel::CSV)
+                            ->withColumns([
+                                \pxlrbt\FilamentExcel\Columns\Column::make('id')->heading('ID'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('date')->heading('Datum'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('account.name')->heading('Konto'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('amount')->heading('Betrag'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('category.name')->heading('Kategorie'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('toAccount.name')->heading('Zielkonto'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('type.name')->heading('Typ'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('entity.name')->heading('Beschreibung'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('notes')->heading('Notizen'),
+                            ]),
+                    ]),
+                Action::make('exportOverview')
+                    ->label('Export Übersicht')
+                    ->icon('heroicon-o-chart-bar')
+                    ->color('success')
+                    ->action(function ($livewire) {
+                        $query = $livewire->getFilteredTableQuery();
+                        $transactions = $query->with(['type', 'account', 'category'])->get();
+                        
+                        return \Maatwebsite\Excel\Facades\Excel::download(
+                            new \App\Exports\TransactionsOverviewExport($transactions),
+                            'transactions-overview-' . date('Y-m-d') . '.csv',
+                            \Maatwebsite\Excel\Excel::CSV
+                        );
+                    }),
                 BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->label('Export Ausgewählte')
+                        ->exports([
+                            ExcelExport::make()
+                                ->fromTable()
+                                ->withFilename(fn () => 'transactions-selected-' . date('Y-m-d'))
+                                ->withWriterType(\Maatwebsite\Excel\Excel::CSV),
+                        ]),
                     DeleteBulkAction::make(),
                 ]),
             ]);

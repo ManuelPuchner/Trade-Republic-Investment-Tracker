@@ -14,6 +14,9 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use pxlrbt\FilamentExcel\Actions\ExportAction;
+use pxlrbt\FilamentExcel\Actions\ExportBulkAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class DebtsTable
 {
@@ -134,7 +137,46 @@ class DebtsTable
                     ])),
             ])
             ->toolbarActions([
+                ExportAction::make()
+                    ->label('Export CSV')
+                    ->exports([
+                        ExcelExport::make()
+                            ->fromTable()
+                            ->withFilename(fn () => 'debts-'.date('Y-m-d'))
+                            ->withWriterType(\Maatwebsite\Excel\Excel::CSV)
+                            ->withColumns([
+                                \pxlrbt\FilamentExcel\Columns\Column::make('debtor.name')->heading('Schuldner'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('amount')->heading('Betrag'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('description')->heading('Beschreibung'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('is_paid')->heading('Status')->formatStateUsing(fn ($state) => $state ? 'Bezahlt' : 'Offen'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('payment_method')->heading('Zahlungsart'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('account.name')->heading('Konto'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('paid_at')->heading('Bezahlt am'),
+                            ]),
+                    ]),
+                Action::make('exportOverview')
+                    ->label('Export Übersicht')
+                    ->icon('heroicon-o-chart-bar')
+                    ->color('success')
+                    ->action(function ($livewire) {
+                        $query = $livewire->getFilteredTableQuery();
+                        $debts = $query->with(['debtor', 'account'])->get();
+                        
+                        return \Maatwebsite\Excel\Facades\Excel::download(
+                            new \App\Exports\DebtsOverviewExport($debts),
+                            'debts-overview-' . date('Y-m-d') . '.csv',
+                            \Maatwebsite\Excel\Excel::CSV
+                        );
+                    }),
                 BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->label('Export Ausgewählte')
+                        ->exports([
+                            ExcelExport::make()
+                                ->fromTable()
+                                ->withFilename(fn () => 'debts-selected-'.date('Y-m-d'))
+                                ->withWriterType(\Maatwebsite\Excel\Excel::CSV),
+                        ]),
                     DeleteBulkAction::make(),
                 ]),
             ])

@@ -9,6 +9,10 @@ use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Table;
+use pxlrbt\FilamentExcel\Actions\ExportAction;
+use pxlrbt\FilamentExcel\Actions\ExportBulkAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Filament\Actions\Action;
 
 class AccountsTable
 {
@@ -84,7 +88,46 @@ class AccountsTable
                 EditAction::make(),
             ])
             ->toolbarActions([
+                ExportAction::make()
+                    ->label('Export CSV')
+                    ->exports([
+                        ExcelExport::make()
+                            ->fromTable()
+                            ->withFilename(fn () => 'accounts-' . date('Y-m-d'))
+                            ->withWriterType(\Maatwebsite\Excel\Excel::CSV)
+                            ->withColumns([
+                                \pxlrbt\FilamentExcel\Columns\Column::make('name')->heading('Kontoname'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('bank_name')->heading('Bank'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('account_number')->heading('Kontonummer'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('account_type')->heading('Typ'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('initial_balance')->heading('Anfangssaldo'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('current_balance')->heading('Aktueller Saldo'),
+                                \pxlrbt\FilamentExcel\Columns\Column::make('is_trade_republic')->heading('Trade Republic'),
+                            ]),
+                    ]),
+                Action::make('exportOverview')
+                    ->label('Export Übersicht')
+                    ->icon('heroicon-o-chart-bar')
+                    ->color('success')
+                    ->action(function ($livewire) {
+                        $query = $livewire->getFilteredTableQuery();
+                        $accounts = $query->get();
+                        
+                        return \Maatwebsite\Excel\Facades\Excel::download(
+                            new \App\Exports\AccountsOverviewExport($accounts),
+                            'accounts-overview-' . date('Y-m-d') . '.csv',
+                            \Maatwebsite\Excel\Excel::CSV
+                        );
+                    }),
                 BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->label('Export Ausgewählte')
+                        ->exports([
+                            ExcelExport::make()
+                                ->fromTable()
+                                ->withFilename(fn () => 'accounts-selected-' . date('Y-m-d'))
+                                ->withWriterType(\Maatwebsite\Excel\Excel::CSV),
+                        ]),
                     DeleteBulkAction::make(),
                 ]),
             ])
