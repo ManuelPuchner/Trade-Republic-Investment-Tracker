@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Categories;
 use App\Filament\Resources\Categories\Pages\CreateCategory;
 use App\Filament\Resources\Categories\Pages\EditCategory;
 use App\Filament\Resources\Categories\Pages\ListCategories;
+use App\Filament\Resources\Categories\Pages\ViewCategory;
 use App\Models\Category;
 use BackedEnum;
 use Filament\Forms\Components\ColorPicker;
@@ -17,6 +18,7 @@ use Filament\Tables\Columns\ColorColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\BulkActionGroup;
 use UnitEnum;
@@ -115,6 +117,7 @@ class CategoryResource extends Resource
                 //
             ])
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([
@@ -125,11 +128,19 @@ class CategoryResource extends Resource
             ->defaultSort('name');
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\TransactionsRelationManager::class,
+        ];
+    }
+
     public static function getPages(): array
     {
         return [
             'index' => ListCategories::route('/'),
             'create' => CreateCategory::route('/create'),
+            'view' => ViewCategory::route('/{record}'),
             'edit' => EditCategory::route('/{record}/edit'),
         ];
     }

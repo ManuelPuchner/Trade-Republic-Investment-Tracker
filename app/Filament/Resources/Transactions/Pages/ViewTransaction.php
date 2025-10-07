@@ -2,14 +2,14 @@
 
 namespace App\Filament\Resources\Transactions\Pages;
 
-use Filament\Actions\Action;
-use Filament\Schemas\Schema;
-use Filament\Actions\EditAction;
-use Filament\Support\Enums\FontWeight;
-use Filament\Resources\Pages\ViewRecord;
-use Filament\Infolists\Components\TextEntry;
 use App\Filament\Resources\Entities\EntityResource;
 use App\Filament\Resources\Transactions\TransactionResource;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 
 class ViewTransaction extends ViewRecord
 {
@@ -63,6 +63,21 @@ class ViewTransaction extends ViewRecord
                     ->badge()
                     ->color('info')
                     ->icon('heroicon-o-tag'),
+
+                // Category and Account - Side by side
+                TextEntry::make('category.name')
+                    ->label('Category')
+                    ->badge()
+                    ->color('warning')
+                    ->icon('heroicon-o-folder')
+                    ->placeholder('No category assigned'),
+
+                TextEntry::make('account.name')
+                    ->label('Account')
+                    ->badge()
+                    ->color('success')
+                    ->icon('heroicon-o-credit-card')
+                    ->placeholder('No account assigned'),
 
                 // Entity - Full width
                 TextEntry::make('entity.name')
