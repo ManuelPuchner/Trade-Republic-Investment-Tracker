@@ -88,61 +88,7 @@ class DebtForm
                     ->visible(fn ($get) => $get('is_paid'))
                     ->live(onBlur: false)
                     ->columns(2)
-                    ->colors('primary')
-                    ->afterStateUpdated(function ($state, $set) {
-                        // Trigger account_id update by setting it based on payment method
-                        $firstAccount = match ($state) {
-                            'cash' => Account::where('account_type', 'cash')->first(),
-                            'bank_transfer' => Account::where('is_trade_republic', false)
-                                ->where('account_type', '!=', 'cash')
-                                ->first(),
-                            'trade_republic' => Account::where('is_trade_republic', true)->first(),
-                            default => null,
-                        };
-                        
-                        $set('account_id', $firstAccount?->id);
-                    }),
-
-                Select::make('account_id')
-                    ->label('Empfangenes Konto')
-                    ->live()
-                    ->options(function ($get) {
-                        $paymentMethod = $get('payment_method');
-
-                        if ($paymentMethod === 'cash') {
-                            return Account::where('account_type', 'cash')->pluck('name', 'id');
-                        } elseif ($paymentMethod === 'bank_transfer') {
-                            return Account::where('is_trade_republic', false)
-                                ->where('account_type', '!=', 'cash')
-                                ->pluck('name', 'id');
-                        } elseif ($paymentMethod === 'trade_republic') {
-                            return Account::where('is_trade_republic', true)->pluck('name', 'id');
-                        }
-
-                        return [];
-                    })
-                    ->afterStateHydrated(function ($component, $state, $get) {
-                        // Set default on initial load if no value is set
-                        if (!$state && $get('is_paid')) {
-                            $paymentMethod = $get('payment_method');
-                            
-                            $firstAccount = match ($paymentMethod) {
-                                'cash' => Account::where('account_type', 'cash')->first(),
-                                'bank_transfer' => Account::where('is_trade_republic', false)
-                                    ->where('account_type', '!=', 'cash')
-                                    ->first(),
-                                'trade_republic' => Account::where('is_trade_republic', true)->first(),
-                                default => null,
-                            };
-                            
-                            if ($firstAccount) {
-                                $component->state($firstAccount->id);
-                            }
-                        }
-                    })
-                    ->searchable()
-                    ->prefixIcon('heroicon-o-building-library')
-                    ->visible(fn ($get) => $get('is_paid') && in_array($get('payment_method'), ['cash', 'bank_transfer', 'trade_republic'])),
+                    ->colors('primary'),
 
                 DateTimePicker::make('paid_at')
                     ->label('Bezahlt am')
@@ -161,7 +107,8 @@ class DebtForm
                     ->nullable()
                     ->searchable()
                     ->prefixIcon('heroicon-o-arrow-path')
-                    ->visible(fn ($get) => $get('is_paid') && $get('payment_method') === 'trade_republic'),
+                    ->helperText('Optional: Verknüpfe diese Schuld mit einer bestehenden Transaktion')
+                    ->visible(fn ($get) => $get('is_paid') && in_array($get('payment_method'), ['cash', 'bank_transfer', 'trade_republic'])),
             ]);
     }
 }

@@ -94,11 +94,6 @@ class DebtsTable
                     ])
                     ->placeholder('-'),
 
-                TextColumn::make('account.name')
-                    ->label('Konto')
-                    ->sortable()
-                    ->toggleable(),
-
                 TextColumn::make('paid_at')
                     ->label('Bezahlt am')
                     ->dateTime()

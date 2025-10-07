@@ -48,12 +48,6 @@ class DebtsOverviewExport implements FromCollection, WithHeadings, WithMapping
             'total_amount' => $group->sum('amount'),
         ]);
         
-        // By account
-        $byAccount = $this->debts->filter(fn ($d) => $d->account)->groupBy(fn ($d) => $d->account->name)->map(fn ($group) => [
-            'count' => $group->count(),
-            'total_amount' => $group->sum('amount'),
-        ]);
-        
         // Build overview data
         $overviewData = collect([
             ['label' => '=== ALLGEMEINE ÜBERSICHT ===', 'value' => ''],
@@ -95,16 +89,6 @@ class DebtsOverviewExport implements FromCollection, WithHeadings, WithMapping
                 
                 $overviewData->push(['label' => $methodName . ' - Anzahl', 'value' => $stats['count']]);
                 $overviewData->push(['label' => $methodName . ' - Betrag', 'value' => $stats['total_amount']]);
-            }
-        }
-        
-        if ($byAccount->isNotEmpty()) {
-            $overviewData->push(['label' => '', 'value' => '']);
-            $overviewData->push(['label' => '=== NACH KONTO ===', 'value' => '']);
-            
-            foreach ($byAccount as $account => $stats) {
-                $overviewData->push(['label' => $account . ' - Anzahl', 'value' => $stats['count']]);
-                $overviewData->push(['label' => $account . ' - Betrag', 'value' => $stats['total_amount']]);
             }
         }
         

@@ -23,11 +23,6 @@ class Account extends Model
         'initial_balance_date' => 'datetime',
     ];
 
-    public function debts()
-    {
-        return $this->hasMany(Debt::class);
-    }
-
     public function transactions()
     {
         return $this->hasMany(Transaction::class);

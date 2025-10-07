@@ -67,13 +67,6 @@ class AccountsTable
                     ->trueColor('success')
                     ->falseColor('gray'),
                 
-                TextColumn::make('debts_count')
-                    ->label('Verknüpfte Schulden')
-                    ->counts('debts')
-                    ->sortable()
-                    ->icon('heroicon-o-currency-dollar')
-                    ->color('info'),
-                
                 TextColumn::make('created_at')
                     ->label('Erstellt am')
                     ->dateTime()

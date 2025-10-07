@@ -11,7 +11,6 @@ class Debt extends Model
         'debtor_id',
         'description',
         'payment_method',
-        'account_id',
         'transaction_id',
         'is_paid',
         'paid_at',
@@ -40,11 +39,6 @@ class Debt extends Model
             self::PAYMENT_TRADE_REPUBLIC => 'Trade Republic',
             self::PAYMENT_OTHER => 'Andere',
         ];
-    }
-
-    public function account()
-    {
-        return $this->belongsTo(Account::class);
     }
 
     public function debtor()

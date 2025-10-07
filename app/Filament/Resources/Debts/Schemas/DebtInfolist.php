@@ -55,12 +55,6 @@ class DebtInfolist
                     })
                     ->color(fn ($record) => $record->payment_method ? 'success' : 'gray'),
 
-                TextEntry::make('account.name')
-                    ->label('Konto')
-                    ->icon('heroicon-o-building-library')
-                    ->placeholder('Kein Konto ausgewählt')
-                    ->color(fn ($record) => $record->account ? 'success' : 'gray'),
-
                 TextEntry::make('transaction.entity.name')
                     ->label('Verknüpfte Transaktion')
                     ->icon('heroicon-o-arrow-path')
