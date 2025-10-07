@@ -26,8 +26,13 @@ class TransactionsRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                TextColumn::make('date')->sortable(),
+                TextColumn::make('date')
+                    ->label('Datum')
+                    ->sortable()
+                    ->date(),
+
                 TextColumn::make('amount')
+                    ->label('Betrag')
                     ->money('eur')
                     ->summarize([
                         Summarizer::make()
@@ -70,6 +75,15 @@ class TransactionsRelationManager extends RelationManager
                                 return "Net Total: {$netTotalFormatted} | Dividends: {$dividendTotalFormatted}";
                             }),
                     ]),
+
+                TextColumn::make('account.name')
+                    ->label('Konto')
+                    ->sortable()
+                    ->icon('heroicon-o-credit-card')
+                    ->badge()
+                    ->color('info')
+                    ->placeholder('-'),
+
                 TextColumn::make('type.name')
                     ->label('Transaction Type')
                     ->badge()

@@ -33,11 +33,6 @@ class Account extends Model
         return $this->hasMany(Transaction::class);
     }
 
-    public function incomingTransfers()
-    {
-        return $this->hasMany(Transaction::class, 'to_account_id');
-    }
-
     /**
      * Calculate current balance based on transactions
      * For Trade Republic: Uses KassenbestandWidget formula (no initial_balance)
@@ -62,9 +57,18 @@ class Account extends Model
                 $ausgaben = (clone $transactions)->whereHas('type', fn ($q) => $q->where('name', 'Ausgabe'))->sum('amount');
                 $savebackSteuer = (clone $transactions)->whereHas('type', fn ($q) => $q->where('name', 'Saveback Steuer'))->sum('amount');
 
-                // Transfers
-                $incomingTransfers = $this->incomingTransfers()->sum('amount');
-                $outgoingTransfers = (clone $transactions)->whereNotNull('to_account_id')->sum('amount');
+                // Transfers - NEW LOGIC
+                // Incoming transfers: Transfer type WITHOUT to_account_id (these add to balance)
+                $incomingTransfers = (clone $transactions)
+                    ->whereHas('type', fn ($q) => $q->where('name', 'Transfer'))
+                    ->whereNull('to_account_id')
+                    ->sum('amount');
+                
+                // Outgoing transfers: Transfer type WITH to_account_id (these subtract from balance)
+                $outgoingTransfers = (clone $transactions)
+                    ->whereHas('type', fn ($q) => $q->where('name', 'Transfer'))
+                    ->whereNotNull('to_account_id')
+                    ->sum('amount');
 
                 // Calculate balance from transactions
                 $transactionsBalance = $einzahlungen
@@ -107,9 +111,18 @@ class Account extends Model
         $ausgaben = (clone $transactions)->whereHas('type', fn ($q) => $q->where('name', 'Ausgabe'))->sum('amount');
         $savebackSteuer = (clone $transactions)->whereHas('type', fn ($q) => $q->where('name', 'Saveback Steuer'))->sum('amount');
 
-        // Transfers
-        $incomingTransfers = $this->incomingTransfers()->where('date', '<=', $date)->sum('amount');
-        $outgoingTransfers = (clone $transactions)->whereNotNull('to_account_id')->sum('amount');
+        // Transfers - NEW LOGIC
+        // Incoming transfers: Transfer type WITHOUT to_account_id (these add to balance)
+        $incomingTransfers = (clone $transactions)
+            ->whereHas('type', fn ($q) => $q->where('name', 'Transfer'))
+            ->whereNull('to_account_id')
+            ->sum('amount');
+        
+        // Outgoing transfers: Transfer type WITH to_account_id (these subtract from balance)
+        $outgoingTransfers = (clone $transactions)
+            ->whereHas('type', fn ($q) => $q->where('name', 'Transfer'))
+            ->whereNotNull('to_account_id')
+            ->sum('amount');
 
         return $einzahlungen
             + $verkaeufe

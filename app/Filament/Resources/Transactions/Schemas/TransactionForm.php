@@ -2,15 +2,15 @@
 
 namespace App\Filament\Resources\Transactions\Schemas;
 
-use App\Models\Entity;
 use App\Models\Account;
 use App\Models\Category;
-use Filament\Schemas\Schema;
+use App\Models\Entity;
 use App\Models\TransactionType;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DatePicker;
+use Filament\Schemas\Schema;
 
 class TransactionForm
 {
@@ -77,6 +77,17 @@ class TransactionForm
                             $set('entity_id', null);
                         }
                     })
+                    ->required(function ($get) {
+                        $typeId = $get('transaction_type_id');
+                        if (! $typeId) {
+                            return false;
+                        }
+
+                        $type = TransactionType::find($typeId);
+
+                        // Required for Transfer type
+                        return $type && $type->name === 'Transfer';
+                    })
                     ->visible(function ($get) {
                         $typeId = $get('transaction_type_id');
                         if (! $typeId) {
@@ -85,8 +96,9 @@ class TransactionForm
 
                         $type = TransactionType::find($typeId);
 
-                        // Show for Ausgabe type (can be transfer or regular expense)
-                        return $type && $type->name === 'Ausgabe';
+                        // Show for Transfer type (dedicated transfer type)
+                        // OR for Ausgabe type (can be transfer or regular expense)
+                        return $type && in_array($type->name, ['Transfer', 'Ausgabe']);
                     })
                     ->columnSpan(2),
 
@@ -118,6 +130,11 @@ class TransactionForm
                             return 'Wo ausgegeben / Beschreibung';
                         }
 
+                        // For transfers: "Beschreibung"
+                        if ($type->name === 'Transfer') {
+                            return 'Beschreibung (optional)';
+                        }
+
                         return 'Beschreibung';
                     })
                     ->relationship('entity', 'name')
@@ -145,6 +162,10 @@ class TransactionForm
 
                         if ($type->name === 'Ausgabe') {
                             return 'Wo hast du das Geld ausgegeben? (z.B. McDonalds, Amazon, etc.)';
+                        }
+
+                        if ($type->name === 'Transfer') {
+                            return 'Optionale Beschreibung für diese Überweisung';
                         }
 
                         return 'Beschreibung der Transaktion';
@@ -186,6 +207,11 @@ class TransactionForm
                             return empty($get('to_account_id'));
                         }
 
+                        // For Transfer: NOT required (optional description)
+                        if ($type->name === 'Transfer') {
+                            return false;
+                        }
+
                         return false;
                     })
                     ->visible(function ($get) {
@@ -211,6 +237,11 @@ class TransactionForm
 
                         // Show for Einzahlung
                         if ($type->name === 'Einzahlung') {
+                            return true;
+                        }
+
+                        // For Transfer: show (as optional description field)
+                        if ($type->name === 'Transfer') {
                             return true;
                         }
 
@@ -251,6 +282,7 @@ class TransactionForm
                         }
 
                         // Show for Ausgabe and Einzahlung (non-investment transactions)
+                        // Hide for Transfer (not needed for transfers between accounts)
                         return in_array($type->name, ['Ausgabe', 'Einzahlung']);
                     })
                     ->columnSpan(2),
