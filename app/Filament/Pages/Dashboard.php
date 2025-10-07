@@ -10,10 +10,17 @@ use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
 {
+    public function getColumns(): int
+    {
+        return 2; // 2 column grid for the dashboard
+    }
+
     public function getWidgets(): array
     {
         return [
-            \App\Filament\Widgets\KassenbestandWidget::class,
+            \App\Filament\Widgets\AccountBalancesOverview::class,
+            \App\Filament\Widgets\AccountTypeBalancesWidget::class,
+            \App\Filament\Widgets\TotalDebtsWidget::class,
             \App\Filament\Widgets\PortfolioPerformanceWidget::class,
             \App\Filament\Widgets\TransactionTypeSummaryWidget::class,
         ];

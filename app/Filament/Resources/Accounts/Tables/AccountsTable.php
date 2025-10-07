@@ -35,9 +35,24 @@ class AccountsTable
                         'checking' => '🏦 Girokonto',
                         'savings' => '💰 Sparkonto',
                         'investment' => '📈 Anlagekonto',
+                        'cash' => '💵 Bargeld',
                         'other' => '📄 Sonstiges',
                         default => $state,
                     })
+                    ->sortable(),
+                
+                TextColumn::make('initial_balance')
+                    ->label('Anfangssaldo')
+                    ->money('EUR')
+                    ->sortable()
+                    ->toggleable(),
+                
+                TextColumn::make('current_balance')
+                    ->label('Aktueller Saldo')
+                    ->money('EUR')
+                    ->weight('bold')
+                    ->color(fn ($state): string => $state >= 0 ? 'success' : 'danger')
+                    ->icon(fn ($state): string => $state >= 0 ? 'heroicon-o-arrow-trending-up' : 'heroicon-o-arrow-trending-down')
                     ->sortable(),
                 
                 IconColumn::make('is_trade_republic')

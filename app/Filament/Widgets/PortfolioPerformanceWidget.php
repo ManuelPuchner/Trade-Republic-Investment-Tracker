@@ -2,26 +2,42 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Transaction;
+use App\Models\Account;
 use App\Models\PortfolioSetting;
-use Filament\Widgets\StatsOverviewWidget\Stat;
+use App\Models\Transaction;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class PortfolioPerformanceWidget extends BaseWidget
 {
     protected static ?int $sort = 2;
+
+    protected int|string|array $columnSpan = 'full';
 
     protected function getColumns(): int
     {
         return 2;
     }
 
-    protected ?string $heading = 'Portfolio Performance';
+    protected ?string $heading = '📈 Trade Republic Portfolio Performance';
+
+    protected static bool $isLazy = false;
 
     protected function getStats(): array
     {
+        // Get Trade Republic account
+        $tradeRepublicAccount = Account::where('is_trade_republic', true)->first();
+
+        if (! $tradeRepublicAccount) {
+            return [
+                Stat::make('Error', 'Trade Republic account not found')
+                    ->description('Please create a Trade Republic account')
+                    ->color('danger'),
+            ];
+        }
+
         $currentPortfolioValue = PortfolioSetting::getCurrentPortfolioValue();
-        $gesamtInvestiert = $this->calculateGesamtInvestiert();
+        $gesamtInvestiert = $this->calculateGesamtInvestiert($tradeRepublicAccount->id);
         $percentage = $this->calculatePercentage($currentPortfolioValue, $gesamtInvestiert);
         $absoluteGain = $currentPortfolioValue - $gesamtInvestiert;
 
@@ -38,18 +54,20 @@ class PortfolioPerformanceWidget extends BaseWidget
         ];
     }
 
-    protected function calculateGesamtInvestiert(): float
+    protected function calculateGesamtInvestiert(int $accountId): float
     {
-        // gesamt_investiert = käufe - verkäufe (only past and current transactions)
-        $kaeufe = Transaction::whereHas('type', function ($query) {
-            $query->where('name', 'Kauf');
-        })
+        // gesamt_investiert = käufe - verkäufe (only Trade Republic account)
+        $kaeufe = Transaction::where('account_id', $accountId)
+            ->whereHas('type', function ($query) {
+                $query->where('name', 'Kauf');
+            })
             ->whereDate('date', '<=', today())
             ->sum('amount');
 
-        $verkaeufe = Transaction::whereHas('type', function ($query) {
-            $query->where('name', 'Verkauf');
-        })
+        $verkaeufe = Transaction::where('account_id', $accountId)
+            ->whereHas('type', function ($query) {
+                $query->where('name', 'Verkauf');
+            })
             ->whereDate('date', '<=', today())
             ->sum('amount');
 

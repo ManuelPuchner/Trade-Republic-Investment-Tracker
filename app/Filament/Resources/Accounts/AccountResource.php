@@ -2,20 +2,20 @@
 
 namespace App\Filament\Resources\Accounts;
 
-use App\Filament\Resources\Accounts\Pages\CreateAccount;
-use App\Filament\Resources\Accounts\Pages\EditAccount;
-use App\Filament\Resources\Accounts\Pages\ListAccounts;
-use App\Filament\Resources\Accounts\Pages\ViewAccount;
-use App\Filament\Resources\Accounts\Schemas\AccountForm;
-use App\Filament\Resources\Accounts\Schemas\AccountInfolist;
-use App\Filament\Resources\Accounts\Tables\AccountsTable;
-use App\Models\Account;
-use BackedEnum;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Table;
 use UnitEnum;
+use BackedEnum;
+use App\Models\Account;
+use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
+use App\Filament\Resources\Accounts\Pages\EditAccount;
+use App\Filament\Resources\Accounts\Pages\ViewAccount;
+use App\Filament\Resources\Accounts\Pages\ListAccounts;
+use App\Filament\Resources\Accounts\Pages\CreateAccount;
+use App\Filament\Resources\Accounts\Schemas\AccountForm;
+use App\Filament\Resources\Accounts\Tables\AccountsTable;
+use App\Filament\Resources\Accounts\Schemas\AccountInfolist;
 
 class AccountResource extends Resource
 {
@@ -27,7 +27,7 @@ class AccountResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Schulden Management';
+    protected static string|UnitEnum|null $navigationGroup = 'Finanz Management';
 
     public static function form(Schema $schema): Schema
     {

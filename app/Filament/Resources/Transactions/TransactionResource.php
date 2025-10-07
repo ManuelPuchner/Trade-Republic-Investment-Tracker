@@ -2,21 +2,21 @@
 
 namespace App\Filament\Resources\Transactions;
 
-use App\Filament\Resources\Transactions\Pages\CreateTransaction;
+use UnitEnum;
+use BackedEnum;
+use Filament\Tables\Table;
+use App\Models\Transaction;
+use Filament\Schemas\Schema;
+use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Support\Htmlable;
 use App\Filament\Resources\Transactions\Pages\EditTransaction;
-use App\Filament\Resources\Transactions\Pages\ListTransactions;
 use App\Filament\Resources\Transactions\Pages\ViewTransaction;
+use App\Filament\Resources\Transactions\Pages\ListTransactions;
+use App\Filament\Resources\Transactions\Pages\CreateTransaction;
 use App\Filament\Resources\Transactions\Schemas\TransactionForm;
 use App\Filament\Resources\Transactions\Tables\TransactionsTable;
-use App\Models\Transaction;
-use BackedEnum;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Table;
-use Illuminate\Contracts\Support\Htmlable;
-use Illuminate\Database\Eloquent\Model;
-use UnitEnum;
 
 class TransactionResource extends Resource
 {
@@ -24,7 +24,7 @@ class TransactionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Finance';
+    protected static string|UnitEnum|null $navigationGroup = 'Finanz Management';
 
     protected static ?string $slug = 'transactions'; // <- this defines your route segment
 

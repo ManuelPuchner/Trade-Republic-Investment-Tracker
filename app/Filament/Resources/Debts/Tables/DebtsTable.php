@@ -3,17 +3,17 @@
 namespace App\Filament\Resources\Debts\Tables;
 
 use App\Models\Debt;
-use Filament\Tables\Table;
 use Filament\Actions\Action;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\Summarizers\Count;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Table;
 
 class DebtsTable
 {
@@ -34,7 +34,13 @@ class DebtsTable
                     ->sortable()
                     ->icon('heroicon-o-currency-euro')
                     ->weight('bold')
-                    ->color(fn ($record) => $record->is_paid ? 'success' : 'warning'),
+                    ->color(fn ($record) => $record->is_paid ? 'success' : 'warning')
+                    ->summarize([
+                        Sum::make()
+                            ->label('Gesamt')
+                            ->money('EUR')
+                            ->formatStateUsing(fn ($state) => '€ '.number_format($state, 2, ',', '.')),
+                    ]),
 
                 TextColumn::make('description')
                     ->label('Beschreibung')
@@ -60,6 +66,10 @@ class DebtsTable
                     ->icons([
                         'heroicon-o-check-circle' => 'Bezahlt',
                         'heroicon-o-clock' => 'Offen',
+                    ])
+                    ->summarize([
+                        Count::make()
+                            ->label('Anzahl'),
                     ]),
 
                 TextColumn::make('payment_method')
