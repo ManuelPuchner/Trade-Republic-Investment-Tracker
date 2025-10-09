@@ -99,7 +99,20 @@ class TransactionsTable
                 TextColumn::make('category.name')
                     ->label('Kategorie')
                     ->badge()
-                    ->color(fn ($record): string => $record->category?->color ?? 'gray')
+                    ->color(fn ($record): array|string => $record->category?->color ? [
+                        50 => $record->category->color.'1A',   // 10% opacity
+                        100 => $record->category->color.'33',  // 20% opacity
+                        200 => $record->category->color.'4D',  // 30% opacity
+                        300 => $record->category->color.'66',  // 40% opacity
+                        400 => $record->category->color.'80',  // 50% opacity
+                        500 => $record->category->color,         // 100% opacity
+                        600 => $record->category->color,
+                        700 => $record->category->color,
+                        800 => $record->category->color,
+                        900 => $record->category->color,
+                        950 => $record->category->color,
+                    ] : 'gray'
+                    )
                     ->icon(fn ($record): ?string => $record->category?->icon)
                     ->sortable(query: function ($query, $direction) {
                         return $query
