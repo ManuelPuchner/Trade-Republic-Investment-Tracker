@@ -25,7 +25,13 @@ class TransactionsRelationManager extends RelationManager
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('entity.name')
                     ->label('Beschreibung')
-                    ->sortable()
+                    ->sortable(query: function ($query, $direction) {
+                        return $query
+                            ->join('entities', 'transactions.entity_id', '=', 'entities.id')
+                            ->orderBy('entities.name', $direction)
+                            ->orderBy('transactions.id', 'desc')
+                            ->select('transactions.*');
+                    })
                     ->searchable()
                     ->placeholder('—')
                     ->icon('heroicon-o-document-text')
@@ -42,20 +48,30 @@ class TransactionsRelationManager extends RelationManager
                 \Filament\Tables\Columns\TextColumn::make('date')
                     ->label('Datum')
                     ->date()
-                    ->sortable()
+                    ->sortable(query: function ($query, $direction) {
+                        return $query->orderBy('date', $direction)->orderBy('id', 'desc');
+                    })
                     ->searchable()
                     ->icon('heroicon-o-calendar'),
 
                 \Filament\Tables\Columns\TextColumn::make('account.name')
                     ->label('Konto')
-                    ->sortable()
+                    ->sortable(query: function ($query, $direction) {
+                        return $query
+                            ->join('accounts', 'transactions.account_id', '=', 'accounts.id')
+                            ->orderBy('accounts.name', $direction)
+                            ->orderBy('transactions.id', 'desc')
+                            ->select('transactions.*');
+                    })
                     ->searchable()
                     ->icon('heroicon-o-wallet')
                     ->toggleable(),
 
                 \Filament\Tables\Columns\TextColumn::make('amount')
                     ->label('Betrag')
-                    ->sortable()
+                    ->sortable(query: function ($query, $direction) {
+                        return $query->orderBy('amount', $direction)->orderBy('id', 'desc');
+                    })
                     ->searchable()
                     ->weight('bold')
                     ->formatStateUsing(function ($record) {

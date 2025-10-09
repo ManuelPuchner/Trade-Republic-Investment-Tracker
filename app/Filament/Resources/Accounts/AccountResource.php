@@ -16,6 +16,7 @@ use App\Filament\Resources\Accounts\Pages\CreateAccount;
 use App\Filament\Resources\Accounts\Schemas\AccountForm;
 use App\Filament\Resources\Accounts\Tables\AccountsTable;
 use App\Filament\Resources\Accounts\Schemas\AccountInfolist;
+use App\Filament\Resources\Categories\RelationManagers\TransactionsRelationManager;
 
 class AccountResource extends Resource
 {
@@ -47,7 +48,7 @@ class AccountResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            TransactionsRelationManager::class,
         ];
     }
 

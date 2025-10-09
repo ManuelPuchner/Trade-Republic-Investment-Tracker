@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Transaction extends Model
 {
@@ -22,6 +23,23 @@ class Transaction extends Model
         'date' => 'date',
         'amount' => 'decimal:2',
     ];
+
+    /**
+     * Scope to add id as secondary sort if not already sorting by id
+     */
+    public function scopeWithSecondaryIdSort($query)
+    {
+        $orders = $query->getQuery()->orders ?? [];
+        $hasIdOrder = collect($orders)->contains(fn($order) => 
+            isset($order['column']) && $order['column'] === 'id'
+        );
+        
+        if (!$hasIdOrder) {
+            $query->orderBy('id', 'desc');
+        }
+        
+        return $query;
+    }
 
     public function type()
     {
