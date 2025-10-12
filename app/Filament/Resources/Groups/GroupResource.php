@@ -2,19 +2,20 @@
 
 namespace App\Filament\Resources\Groups;
 
-use App\Filament\Resources\Groups\Pages\CreateGroup;
-use App\Filament\Resources\Groups\Pages\EditGroup;
-use App\Filament\Resources\Groups\Pages\ListGroups;
-use App\Filament\Resources\Groups\Pages\ViewGroup;
-use App\Filament\Resources\Groups\Schemas\GroupForm;
-use App\Filament\Resources\Groups\Schemas\GroupInfolist;
-use App\Filament\Resources\Groups\Tables\GroupsTable;
-use App\Models\Group;
+use UnitEnum;
 use BackedEnum;
-use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
+use App\Models\Group;
 use Filament\Tables\Table;
+use Filament\Schemas\Schema;
+use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
+use App\Filament\Resources\Groups\Pages\EditGroup;
+use App\Filament\Resources\Groups\Pages\ViewGroup;
+use App\Filament\Resources\Groups\Pages\ListGroups;
+use App\Filament\Resources\Groups\Pages\CreateGroup;
+use App\Filament\Resources\Groups\Schemas\GroupForm;
+use App\Filament\Resources\Groups\Tables\GroupsTable;
+use App\Filament\Resources\Groups\Schemas\GroupInfolist;
 
 class GroupResource extends Resource
 {
@@ -23,6 +24,8 @@ class GroupResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Finanz Management';
 
     public static function form(Schema $schema): Schema
     {
