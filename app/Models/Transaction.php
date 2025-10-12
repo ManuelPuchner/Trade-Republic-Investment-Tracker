@@ -16,6 +16,7 @@ class Transaction extends Model
         'account_id',
         'category_id',
         'to_account_id',
+        'group_id',
         'notes',
     ];
 
@@ -79,6 +80,11 @@ class Transaction extends Model
     public function toAccount()
     {
         return $this->belongsTo(Account::class, 'to_account_id');
+    }
+
+    public function group()
+    {
+        return $this->belongsTo(Group::class);
     }
 
     /**

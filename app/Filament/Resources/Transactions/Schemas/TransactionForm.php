@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Transactions\Schemas;
 use App\Models\Account;
 use App\Models\Category;
 use App\Models\Entity;
+use App\Models\Group;
 use App\Models\TransactionType;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -316,7 +317,18 @@ class TransactionForm
                     })
                     ->columnSpanFull(),
 
-                // Step 8: Notes (always optional, always at the end)
+                // Step 8: Group (optional grouping for analysis)
+                Select::make('group_id')
+                    ->label('Gruppe')
+                    ->relationship('group', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->prefixIcon('heroicon-o-rectangle-stack')
+                    ->helperText('Ordne diese Transaktion einer Gruppe für bessere Analyse zu')
+                    ->nullable()
+                    ->columnSpan(2),
+
+                // Step 9: Notes (always optional, always at the end)
                 Textarea::make('notes')
                     ->label('Notizen')
                     ->rows(3)

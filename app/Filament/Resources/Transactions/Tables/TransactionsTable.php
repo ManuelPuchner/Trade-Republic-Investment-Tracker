@@ -156,6 +156,22 @@ class TransactionsTable
                     ->placeholder('—')
                     ->icon('heroicon-o-document-text'),
 
+                TextColumn::make('group.name')
+                    ->label('Gruppe')
+                    ->badge()
+                    ->color(fn ($record): string => $record->group?->color ?? 'gray')
+                    ->sortable(query: function ($query, $direction) {
+                        return $query
+                            ->leftJoin('groups', 'transactions.group_id', '=', 'groups.id')
+                            ->orderBy('groups.name', $direction)
+                            ->orderBy('transactions.id', 'desc')
+                            ->select('transactions.*');
+                    })
+                    ->searchable()
+                    ->placeholder('—')
+                    ->icon('heroicon-o-rectangle-stack')
+                    ->toggleable(),
+
                 TextColumn::make('parent_id')
                     ->label('Übergeordnet')
                     ->badge()
@@ -195,6 +211,10 @@ class TransactionsTable
                 SelectFilter::make('entity_id')
                     ->label('Wertpapier')
                     ->relationship('entity', 'name'),
+
+                SelectFilter::make('group_id')
+                    ->label('Gruppe')
+                    ->relationship('group', 'name'),
 
                 SelectFilter::make('parent_id')
                     ->label('Übergeordnete Transaktion')
