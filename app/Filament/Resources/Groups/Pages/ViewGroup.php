@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Groups\Pages;
 
+use App\Filament\Actions\ExportGroupAction;
 use App\Filament\Resources\Groups\GroupResource;
 use App\Filament\Resources\Groups\Widgets\GroupStatsOverview;
 use Filament\Actions\EditAction;
@@ -14,6 +15,7 @@ class ViewGroup extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            ExportGroupAction::make(),
             EditAction::make(),
         ];
     }

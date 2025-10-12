@@ -54,7 +54,7 @@ class GroupStatsOverview extends StatsOverviewWidget
             $totalAmount += abs($amount);
         }
 
-        return [
+        $stats = [
             Stat::make('Total Transactions', $totalTransactions)
                 ->description('Number of transactions in this group')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
@@ -69,11 +69,16 @@ class GroupStatsOverview extends StatsOverviewWidget
                 ->description('Total transaction volume')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('info'),
-                
-            Stat::make('Dividends', $dividendTotal > 0 ? '€' . number_format($dividendTotal, 2) : 'No dividends')
+        ];
+
+        // Only add dividends stat if there are dividends > 0
+        if ($dividendTotal > 0) {
+            $stats[] = Stat::make('Dividends', '€' . number_format($dividendTotal, 2))
                 ->description('Total dividend income')
                 ->descriptionIcon('heroicon-m-gift')
-                ->color($dividendTotal > 0 ? 'success' : 'gray'),
-        ];
+                ->color('success');
+        }
+
+        return $stats;
     }
 }

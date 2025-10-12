@@ -159,7 +159,19 @@ class TransactionsTable
                 TextColumn::make('group.name')
                     ->label('Gruppe')
                     ->badge()
-                    ->color(fn ($record): string => $record->group?->color ?? 'gray')
+                    ->color(fn ($record): array|string => $record->group?->color ? [
+                        50 => $record->group->color.'1A',   // 10% opacity
+                        100 => $record->group->color.'33',  // 20% opacity
+                        200 => $record->group->color.'4D',  // 30% opacity
+                        300 => $record->group->color.'66',  // 40% opacity
+                        400 => $record->group->color.'80',  // 50% opacity
+                        500 => $record->group->color,       // 100% opacity
+                        600 => $record->group->color,
+                        700 => $record->group->color,
+                        800 => $record->group->color,
+                        900 => $record->group->color,
+                        950 => $record->group->color,
+                    ] : 'gray')
                     ->sortable(query: function ($query, $direction) {
                         return $query
                             ->leftJoin('groups', 'transactions.group_id', '=', 'groups.id')
