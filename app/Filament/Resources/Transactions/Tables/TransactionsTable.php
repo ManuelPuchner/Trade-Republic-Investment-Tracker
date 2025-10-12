@@ -2,20 +2,23 @@
 
 namespace App\Filament\Resources\Transactions\Tables;
 
+use Filament\Tables\Table;
 use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\DatePicker;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
+use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 use pxlrbt\FilamentExcel\Actions\ExportAction;
 use pxlrbt\FilamentExcel\Actions\ExportBulkAction;
-use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class TransactionsTable
 {
@@ -39,19 +42,18 @@ class TransactionsTable
                     ->searchable()
                     ->icon('heroicon-o-calendar'),
 
-                TextColumn::make('account.name')
-                    ->label('Konto')
+                TextColumn::make('entity.name')
+                    ->label('Beschreibung')
                     ->sortable(query: function ($query, $direction) {
                         return $query
-                            ->join('accounts', 'transactions.account_id', '=', 'accounts.id')
-                            ->orderBy('accounts.name', $direction)
+                            ->join('entities', 'transactions.entity_id', '=', 'entities.id')
+                            ->orderBy('entities.name', $direction)
                             ->orderBy('transactions.id', 'desc')
                             ->select('transactions.*');
                     })
                     ->searchable()
-                    ->icon('heroicon-o-wallet')
-                    ->toggleable(),
-
+                    ->placeholder('—')
+                    ->icon('heroicon-o-document-text'),
                 TextColumn::make('amount')
                     ->label('Betrag')
                     ->sortable(query: function ($query, $direction) {
@@ -123,12 +125,18 @@ class TransactionsTable
                     })
                     ->toggleable(),
 
-                TextColumn::make('toAccount.name')
-                    ->label('Zielkonto')
-                    ->badge()
-                    ->color('info')
-                    ->icon('heroicon-o-arrow-right-circle')
-                    ->placeholder('—')
+                TextColumn::make('account.name')
+                    ->label('Konto')
+                    ->sortable(query: function ($query, $direction) {
+                        return $query
+                            ->join('accounts', 'transactions.account_id', '=', 'accounts.id')
+                            ->orderBy('accounts.name', $direction)
+                            ->orderBy('transactions.id', 'desc')
+                            ->select('transactions.*');
+                    })
+                    ->searchable()
+                    ->limit(15)
+                    ->icon('heroicon-o-wallet')
                     ->toggleable(),
 
                 TextColumn::make('type.name')
@@ -143,18 +151,13 @@ class TransactionsTable
                             ->select('transactions.*');
                     }),
 
-                TextColumn::make('entity.name')
-                    ->label('Beschreibung')
-                    ->sortable(query: function ($query, $direction) {
-                        return $query
-                            ->join('entities', 'transactions.entity_id', '=', 'entities.id')
-                            ->orderBy('entities.name', $direction)
-                            ->orderBy('transactions.id', 'desc')
-                            ->select('transactions.*');
-                    })
-                    ->searchable()
+                TextColumn::make('toAccount.name')
+                    ->label('Zielkonto')
+                    ->badge()
+                    ->color('info')
+                    ->icon('heroicon-o-arrow-right-circle')
                     ->placeholder('—')
-                    ->icon('heroicon-o-document-text'),
+                    ->toggleable(),
 
                 TextColumn::make('group.name')
                     ->label('Gruppe')
@@ -479,6 +482,70 @@ class TransactionsTable
                     ->color('success')
                     ->button(),
                 BulkActionGroup::make([
+                    BulkAction::make('assign_to_group')
+                        ->label('Zu Gruppe hinzufügen')
+                        ->icon('heroicon-o-rectangle-stack')
+                        ->color('info')
+                        ->schema([
+                            Select::make('group_id')
+                                ->label('Gruppe auswählen')
+                                ->relationship('group', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->placeholder('Gruppe auswählen...')
+                                ->required()
+                                ->createOptionForm([
+                                    \Filament\Forms\Components\TextInput::make('name')
+                                        ->label('Gruppenname')
+                                        ->required()
+                                        ->maxLength(255),
+                                    \Filament\Forms\Components\Textarea::make('description')
+                                        ->label('Beschreibung')
+                                        ->rows(3)
+                                        ->nullable(),
+                                    \Filament\Forms\Components\ColorPicker::make('color')
+                                        ->label('Farbe')
+                                        ->default('#3B82F6')
+                                        ->required(),
+                                ])
+                                ->createOptionUsing(function (array $data) {
+                                    return \App\Models\Group::create($data)->id;
+                                }),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $records->each(function ($transaction) use ($data) {
+                                $transaction->update(['group_id' => $data['group_id']]);
+                            });
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Erfolgreich!')
+                                ->body(count($records).' Transaktionen wurden zur Gruppe hinzugefügt.')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    BulkAction::make('remove_from_group')
+                        ->label('Aus Gruppe entfernen')
+                        ->icon('heroicon-o-x-mark')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->modalHeading('Aus Gruppe entfernen')
+                        ->modalDescription('Sind Sie sicher, dass Sie die ausgewählten Transaktionen aus ihrer Gruppe entfernen möchten?')
+                        ->modalSubmitActionLabel('Entfernen')
+                        ->action(function (Collection $records): void {
+                            $records->each(function ($transaction) {
+                                $transaction->update(['group_id' => null]);
+                            });
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Erfolgreich!')
+                                ->body(count($records).' Transaktionen wurden aus ihrer Gruppe entfernt.')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
                     ExportBulkAction::make()
                         ->label('Export Ausgewählte')
                         ->exports([
