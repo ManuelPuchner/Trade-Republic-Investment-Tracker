@@ -2,8 +2,8 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Account;
 use Carbon\Carbon;
+use App\Models\Account;
 use Filament\Support\RawJs;
 use Leandrocfe\FilamentApexCharts\Widgets\ApexChartWidget;
 
@@ -215,7 +215,8 @@ class AccountBalanceHistoryChart extends ApexChartWidget
         $kaeufe = (clone $transactions)->whereHas('type', fn ($q) => $q->where('name', 'Kauf'))->sum('amount');
         $ausgaben = (clone $transactions)->whereHas('type', fn ($q) => $q->where('name', 'Ausgabe'))->sum('amount');
         $savebackSteuer = (clone $transactions)->whereHas('type', fn ($q) => $q->where('name', 'Saveback Steuer'))->sum('amount');
-
+        $ausschuettungssteuer = (clone $transactions)->whereHas('type', fn($q) => $q->where('name', 'Steuer (Ausschüttung/Ausschüttungsgleicher Ertrag)'))->sum('amount');
+        
         $incomingTransfers = (clone $transactions)
             ->whereHas('type', fn ($q) => $q->where('name', 'Transfer'))
             ->whereNull('to_account_id')
@@ -234,6 +235,7 @@ class AccountBalanceHistoryChart extends ApexChartWidget
             - $kaeufe
             - $ausgaben
             - $savebackSteuer
+            - $ausschuettungssteuer
             - $outgoingTransfers;
 
         // For non-Trade Republic accounts, include initial_balance (matching Account model logic)

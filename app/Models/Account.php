@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Account extends Model
 {
@@ -51,6 +51,7 @@ class Account extends Model
                 $kaeufe = (clone $transactions)->whereHas('type', fn ($q) => $q->where('name', 'Kauf'))->sum('amount');
                 $ausgaben = (clone $transactions)->whereHas('type', fn ($q) => $q->where('name', 'Ausgabe'))->sum('amount');
                 $savebackSteuer = (clone $transactions)->whereHas('type', fn ($q) => $q->where('name', 'Saveback Steuer'))->sum('amount');
+                $ausschuettungssteuer = (clone $transactions)->whereHas('type', fn($q) => $q->where('name', 'Steuer (Ausschüttung/Ausschüttungsgleicher Ertrag)'))->sum('amount');
 
                 // Transfers - NEW LOGIC
                 // Incoming transfers: Transfer type WITHOUT to_account_id (these add to balance)
@@ -74,6 +75,7 @@ class Account extends Model
                     - $kaeufe
                     - $ausgaben
                     - $savebackSteuer
+                    - $ausschuettungssteuer
                     - $outgoingTransfers;
 
                 // For non-Trade Republic accounts, include initial_balance

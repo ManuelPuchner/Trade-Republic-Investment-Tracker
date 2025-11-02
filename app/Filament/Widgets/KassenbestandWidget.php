@@ -64,10 +64,14 @@ class KassenbestandWidget extends BaseWidget
         $savebackSteuer = Transaction::whereHas('type', function($query) {
             $query->where('name', 'Saveback Steuer');
         })->sum('amount');
+
+        $ausschuettungssteuer = Transaction::whereHas('type', function($query) {
+            $query->where('name', 'Steuer (Ausschüttung/Ausschüttungsgleicher Ertrag)');
+        })->sum('amount');
         
         // Calculate final balance
-        $kassenbestand = $einzahlungen + $verkaeufe + $zinsen + $dividenden - $kaeufe - $ausgaben - $savebackSteuer;
-        
+        $kassenbestand = $einzahlungen + $verkaeufe + $zinsen + $dividenden - $kaeufe - $ausgaben - $savebackSteuer - $ausschuettungssteuer;
+
         return $kassenbestand;
     }
 }
