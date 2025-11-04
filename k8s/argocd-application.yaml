@@ -17,7 +17,7 @@ spec:
 
   source:
     # Git Repository
-    repoURL: https://github.com/dein-username/trade-republic-tracker.git # ANPASSEN!
+    repoURL: https://github.com/ManuelPuchner/trade-republic-tracker.git # ANPASSEN!
     targetRevision: main # oder master, production, etc.
     path: k8s
 
