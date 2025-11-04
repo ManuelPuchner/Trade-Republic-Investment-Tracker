@@ -72,8 +72,13 @@ RUN npm ci
 # Copy application files
 COPY . .
 
-RUN mkdir -p storage/framework/cache/data \
-    && chmod -R 775 storage
+# Create required Laravel directories with correct permissions
+RUN mkdir -p storage/framework/sessions \
+    && mkdir -p storage/framework/views \
+    && mkdir -p storage/framework/cache/data \
+    && mkdir -p storage/logs \
+    && mkdir -p bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize
