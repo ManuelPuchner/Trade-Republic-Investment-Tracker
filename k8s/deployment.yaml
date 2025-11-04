@@ -1,0 +1,146 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trade-republic-tracker
+  namespace: trade-republic-tracker
+  labels:
+    app: trade-republic-tracker
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: trade-republic-tracker
+  template:
+    metadata:
+      labels:
+        app: trade-republic-tracker
+    spec:
+      initContainers:
+        # Init Container für Migrations
+        - name: migration
+          image: ghcr.io/dein-github-user/trade-republic-tracker:latest # ANPASSEN!
+          command:
+            [
+              "sh",
+              "-c",
+              "php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache",
+            ]
+          envFrom:
+            - configMapRef:
+                name: trade-republic-config
+            - secretRef:
+                name: trade-republic-secret
+          volumeMounts:
+            - name: storage
+              mountPath: /var/www/html/storage/app
+            - name: cache
+              mountPath: /var/www/html/bootstrap/cache
+
+      containers:
+        # Nginx Container
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+            - name: public
+              mountPath: /var/www/html/public
+            - name: storage
+              mountPath: /var/www/html/storage/app/public
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+        # PHP-FPM Container
+        - name: php-fpm
+          image: ghcr.io/dein-github-user/trade-republic-tracker:latest # ANPASSEN!
+          ports:
+            - containerPort: 9000
+              name: php-fpm
+          envFrom:
+            - configMapRef:
+                name: trade-republic-config
+            - secretRef:
+                name: trade-republic-secret
+          volumeMounts:
+            - name: storage
+              mountPath: /var/www/html/storage/app
+            - name: cache
+              mountPath: /var/www/html/bootstrap/cache
+            - name: public
+              mountPath: /var/www/html/public
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            tcpSocket:
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 9000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+        # Queue Worker Container
+        - name: queue-worker
+          image: ghcr.io/dein-github-user/trade-republic-tracker:latest # ANPASSEN!
+          command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=90"]
+          envFrom:
+            - configMapRef:
+                name: trade-republic-config
+            - secretRef:
+                name: trade-republic-secret
+          volumeMounts:
+            - name: storage
+              mountPath: /var/www/html/storage/app
+            - name: cache
+              mountPath: /var/www/html/bootstrap/cache
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+        - name: storage
+          persistentVolumeClaim:
+            claimName: trade-republic-storage
+        - name: cache
+          emptyDir: {}
+        - name: public
+          emptyDir: {}
