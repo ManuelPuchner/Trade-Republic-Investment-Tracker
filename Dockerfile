@@ -72,6 +72,9 @@ RUN npm ci
 # Copy application files
 COPY . .
 
+RUN mkdir -p storage/framework/cache/data \
+    && chmod -R 775 storage
+
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize
 
