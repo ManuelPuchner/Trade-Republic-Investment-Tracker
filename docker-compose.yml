@@ -1,0 +1,72 @@
+version: "3.8"
+
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx.Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - fpm
+    networks:
+      - app-network
+
+  fpm:
+    build:
+      context: .
+      dockerfile: docker/fpm.Dockerfile
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - APP_NAME=Trade-Republic-Investment-Tracker
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_KEY=base64:oKhhIIUeCpAC8wLpMhUl3Lbjdjosq/EI42SvaZtcacU=
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=application
+      - DB_USERNAME=ahmed
+      - DB_PASSWORD=sqlhardPass123
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=rdshardPass123
+      - REDIS_PORT=6379
+      - REDIS_CLIENT=predis
+      - SESSION_DRIVER=redis
+      - CACHE_DRIVER=redis
+      - QUEUE_CONNECTION=sync
+      - LOG_CHANNEL=stack
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: application
+      POSTGRES_USER: ahmed
+      POSTGRES_PASSWORD: sqlhardPass123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass rdshardPass123
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
