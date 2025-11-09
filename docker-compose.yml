@@ -25,7 +25,6 @@ services:
       - APP_NAME=Trade-Republic-Investment-Tracker
       - APP_ENV=local
       - APP_DEBUG=true
-      - APP_KEY=base64:oKhhIIUeCpAC8wLpMhUl3Lbjdjosq/EI42SvaZtcacU=
       - DB_CONNECTION=pgsql
       - DB_HOST=postgres
       - DB_PORT=5432
