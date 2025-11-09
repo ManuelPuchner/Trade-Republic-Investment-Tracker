@@ -29,8 +29,8 @@ services:
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_DATABASE=application
-      - DB_USERNAME=ahmed
-      - DB_PASSWORD=sqlhardPass123
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=
       - REDIS_HOST=redis
       - REDIS_PASSWORD=rdshardPass123
       - REDIS_PORT=6379
@@ -43,11 +43,11 @@ services:
       - app-network
 
   postgres:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     environment:
       POSTGRES_DB: application
-      POSTGRES_USER: ahmed
-      POSTGRES_PASSWORD: sqlhardPass123
+      POSTGRES_USER: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5432:5432"
     volumes:
