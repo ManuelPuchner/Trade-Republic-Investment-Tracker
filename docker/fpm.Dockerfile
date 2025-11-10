@@ -28,8 +28,8 @@ COPY . /var/www/html/
 RUN apk add --no-cache php php-cli php-dom php-intl php-session php-fileinfo php-tokenizer php-xml php-mbstring php-xmlreader php-gd php-simplexml php-xmlwriter composer
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Assets are pre-built by GitHub Actions, just ensure build directory exists
-RUN mkdir -p /var/www/html/public && mv /var/www/html/build /var/www/html/public/ || true
+# Assets are pre-built by GitHub Actions, ensure build directory is in public
+RUN ls -la /var/www/html/build && mkdir -p /var/www/html/public && mv /var/www/html/build /var/www/html/public/ || (echo "Build directory not found" && exit 1)
 
 FROM base AS dev
 
