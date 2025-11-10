@@ -45,9 +45,12 @@ spec:
             - "-c"
           args:
             - |
+              mkdir -p /var/www/html/bootstrap/cache
               mkdir -p /var/www/html/storage/framework/views
               mkdir -p /var/www/html/storage/logs
+              chown -R www-data:www-data /var/www/html/bootstrap/cache
               chown -R www-data:www-data /var/www/html/storage
+              php artisan config:cache
               php artisan migrate --force
       containers:
         - name: nginx
