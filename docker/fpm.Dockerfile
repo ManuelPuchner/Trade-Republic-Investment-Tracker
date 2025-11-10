@@ -21,6 +21,16 @@ RUN docker-php-source extract \
     && docker-php-ext-install apcu
 RUN docker-php-ext-enable apcu
 
+FROM node:20-alpine AS assets-build
+WORKDIR /var/www/html
+COPY . /var/www/html/
+
+RUN apk add --no-cache php php-cli php-dom php-intl php-session php-fileinfo php-tokenizer php-xml php-mbstring php-xmlreader php-gd php-simplexml php-xmlwriter composer
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+RUN npm ci
+RUN npm run build
+
 FROM base AS dev
 
 COPY /composer.json composer.json
@@ -35,6 +45,7 @@ FROM base AS build-fpm
 WORKDIR /var/www/html
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=assets-build /var/www/html/public /var/www/html/public
 COPY /artisan artisan
 COPY . /var/www/html
 # COPY /composer.json composer.json
@@ -54,5 +65,4 @@ RUN composer dump-autoload -o --no-scripts
 FROM build-fpm AS fpm
 
 COPY --from=build-fpm /var/www/html /var/www/html
-# Move Vite build directory to public folder for Laravel to find assets
-RUN mkdir -p /var/www/html/public && mv /var/www/html/build /var/www/html/public/ || true
+# Build directory should already be in public folder from assets-build stage
