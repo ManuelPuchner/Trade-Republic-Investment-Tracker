@@ -21,16 +21,6 @@ RUN docker-php-source extract \
     && docker-php-ext-install apcu
 RUN docker-php-ext-enable apcu
 
-FROM node:20-alpine AS assets-build
-WORKDIR /var/www/html
-COPY . /var/www/html/
-
-RUN apk add --no-cache php php-cli php-dom php-intl php-session php-fileinfo php-tokenizer php-xml php-mbstring php-xmlreader php-gd php-simplexml php-xmlwriter composer
-RUN composer install --no-dev --optimize-autoloader --no-scripts
-
-# Assets are pre-built by GitHub Actions, check what directories exist
-RUN ls -la /var/www/html/ && ls -la /var/www/html/public/ || true
-
 FROM base AS dev
 
 COPY /composer.json composer.json
@@ -47,7 +37,6 @@ WORKDIR /var/www/html
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY /artisan artisan
 COPY . /var/www/html
-COPY --from=assets-build /var/www/html/public/build /var/www/html/public/build
 # COPY /composer.json composer.json
 
 RUN composer install --optimize-autoloader --no-scripts
