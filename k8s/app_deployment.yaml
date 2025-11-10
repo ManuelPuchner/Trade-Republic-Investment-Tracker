@@ -22,6 +22,10 @@ spec:
           emptyDir: {}
         - name: views
           emptyDir: {}
+        - name: cache
+          emptyDir: {}
+        - name: sessions
+          emptyDir: {}
       securityContext:
         fsGroup: 82
       initContainers:
@@ -33,12 +37,26 @@ spec:
                 name: financials-tracker-config
             - secretRef:
                 name: financials-tracker-secret
+          volumeMounts:
+            - name: logs
+              mountPath: /var/www/html/storage/logs
+            - name: views
+              mountPath: /var/www/html/storage/framework/views
+            - name: cache
+              mountPath: /var/www/html/storage/framework/cache
+            - name: sessions
+              mountPath: /var/www/html/storage/framework/sessions
           command:
-            - "php"
+            - "sh"
+            - "-c"
           args:
-            - "artisan"
-            - "migrate"
-            - "--force"
+            - |
+              mkdir -p /var/www/html/storage/framework/views
+              mkdir -p /var/www/html/storage/framework/cache
+              mkdir -p /var/www/html/storage/framework/sessions
+              mkdir -p /var/www/html/storage/logs
+              chown -R www-data:www-data /var/www/html/storage
+              php artisan migrate --force
       containers:
         - name: nginx
           imagePullPolicy: IfNotPresent
@@ -65,6 +83,10 @@ spec:
               mountPath: /var/www/html/storage/logs
             - name: views
               mountPath: /var/www/html/storage/framework/views
+            - name: cache
+              mountPath: /var/www/html/storage/framework/cache
+            - name: sessions
+              mountPath: /var/www/html/storage/framework/sessions
           resources: {}
           image: ghcr.io/manuelpuchner/trade-republic-investment-tracker/fpm:latest
           ports:
