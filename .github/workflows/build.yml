@@ -29,12 +29,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build assets
-        run: |
-          composer install --no-dev --optimize-autoloader --no-scripts
-          npm ci
-          npm run build
-
       - name: Build and push FPM image
         uses: docker/build-push-action@v5
         with:
