@@ -45,9 +45,9 @@ FROM base AS build-fpm
 WORKDIR /var/www/html
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-COPY --from=assets-build /var/www/html/public /var/www/html/public
 COPY /artisan artisan
 COPY . /var/www/html
+COPY --from=assets-build /var/www/html/public /var/www/html/public
 # COPY /composer.json composer.json
 
 RUN composer install --optimize-autoloader --no-scripts
