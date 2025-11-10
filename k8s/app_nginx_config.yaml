@@ -11,17 +11,17 @@ data:
 
         root /var/www/html;
 
-        index index.php;
-        error_page 404 /index.php;
+        index /public/index.php;
+        error_page 404 /public/index.php;
 
         location / {
-            try_files $uri $uri/ /index.php;
+            try_files $uri $uri/ /public/index.php;
         }
 
         location ~ \.php$ {
             fastcgi_pass localhost:9000;
             include fastcgi_params;
-            fastcgi_param SCRIPT_FILENAME /var/www/html/public$fastcgi_script_name;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
             fastcgi_param SCRIPT_NAME $fastcgi_script_name;
         }
     }

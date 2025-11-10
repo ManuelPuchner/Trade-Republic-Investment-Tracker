@@ -21,11 +21,6 @@ spec:
         - name: logs
           emptyDir: {}
         - name: views
-          emptyDir: {}
-        - name: cache
-          emptyDir: {}
-        - name: sessions
-          emptyDir: {}
         - name: nginx-config
           configMap:
             name: nginx-config
