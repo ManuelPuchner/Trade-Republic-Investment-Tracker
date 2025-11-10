@@ -5,6 +5,7 @@ metadata:
   namespace: financials-tracker
 data:
   APP_NAME: Trade-Republic-Investment-Tracker
+  APP_KEY: base64:CefspM+mDkJfZ2YFWf+cvC5htsMaxWKVXfuBHLWT1Go=
   APP_ENV: production
   APP_DEBUG: "false"
   APP_URL: https://financials-tracker.manuelpuchner.duckdns.org
