@@ -32,7 +32,7 @@ jobs:
           context: .
           file: docker/fpm.Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/fpm:latest
+          tags: ghcr.io/${{ github.repository | lower }}/fpm:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -42,6 +42,6 @@ jobs:
           context: .
           file: docker/nginx.Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/nginx:latest
+          tags: ghcr.io/${{ github.repository | lower }}/nginx:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
