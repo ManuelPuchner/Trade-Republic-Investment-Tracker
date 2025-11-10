@@ -54,3 +54,4 @@ RUN composer dump-autoload -o --no-scripts
 FROM build-fpm AS fpm
 
 COPY --from=build-fpm /var/www/html /var/www/html
+RUN mkdir -p /var/www/html/public && mv /var/www/html/build /var/www/html/public/ || true
