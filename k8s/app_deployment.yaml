@@ -21,6 +21,9 @@ spec:
         - name: logs
           emptyDir: {}
         - name: views
+          emptyDir: {}
+        - name: bootstrap-cache
+          emptyDir: {}
         - name: nginx-config
           configMap:
             name: nginx-config
@@ -40,6 +43,8 @@ spec:
               mountPath: /var/www/html/storage/logs
             - name: views
               mountPath: /var/www/html/storage/framework/views
+            - name: bootstrap-cache
+              mountPath: /var/www/html/bootstrap/cache
           command:
             - "sh"
             - "-c"
@@ -81,6 +86,8 @@ spec:
               mountPath: /var/www/html/storage/logs
             - name: views
               mountPath: /var/www/html/storage/framework/views
+            - name: bootstrap-cache
+              mountPath: /var/www/html/bootstrap/cache
           resources: {}
           image: ghcr.io/manuelpuchner/trade-republic-investment-tracker/fpm:latest
           ports:
