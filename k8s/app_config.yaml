@@ -8,6 +8,7 @@ data:
   APP_ENV: production
   APP_DEBUG: "false"
   APP_URL: https://financials-tracker.manuelpuchner.duckdns.org
+  ASSET_URL: https://financials-tracker.manuelpuchner.duckdns.org
   LOG_CHANNEL: stack
   LOG_LEVEL: debug
   DB_CONNECTION: pgsql
