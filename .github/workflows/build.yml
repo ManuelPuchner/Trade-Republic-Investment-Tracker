@@ -35,7 +35,9 @@ jobs:
           context: .
           file: docker/fpm.Dockerfile
           push: true
-          tags: ghcr.io/${{ env.REPO_LOWER }}/fpm:latest
+          tags: |
+            ghcr.io/${{ env.REPO_LOWER }}/fpm:latest
+            ghcr.io/${{ env.REPO_LOWER }}/fpm:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -45,6 +47,15 @@ jobs:
           context: .
           file: docker/nginx.Dockerfile
           push: true
-          tags: ghcr.io/${{ env.REPO_LOWER }}/nginx:latest
+          tags: |
+            ghcr.io/${{ env.REPO_LOWER }}/nginx:latest
+            ghcr.io/${{ env.REPO_LOWER }}/nginx:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Trigger ArgoCD Sync
+        run: |
+          curl -X POST ${{ secrets.ARGOCD_SERVER_URL }}/api/v1/applications/financials-tracker/sync \
+            -H "Authorization: Bearer ${{ secrets.ARGOCD_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{}'
