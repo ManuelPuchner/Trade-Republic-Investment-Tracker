@@ -16,6 +16,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set lowercase repository name
+        run: echo "REPO_LOWER=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -32,7 +35,7 @@ jobs:
           context: .
           file: docker/fpm.Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository | lower }}/fpm:latest
+          tags: ghcr.io/${{ env.REPO_LOWER }}/fpm:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -42,6 +45,6 @@ jobs:
           context: .
           file: docker/nginx.Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository | lower }}/nginx:latest
+          tags: ghcr.io/${{ env.REPO_LOWER }}/nginx:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
