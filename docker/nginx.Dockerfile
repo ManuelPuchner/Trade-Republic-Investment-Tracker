@@ -10,5 +10,4 @@ RUN npm run build
 
 FROM nginx:1.19-alpine AS nginx
 COPY /docker/vhost.conf /etc/nginx/conf.d/default.conf
-COPY --from=assets-build /var/www/html/public /var/www/html/
-RUN mkdir -p /var/www/html/public && mv /var/www/html/build /var/www/html/public/ || true
+COPY --from=assets-build /var/www/html/public /var/www/html/public/

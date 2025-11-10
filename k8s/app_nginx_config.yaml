@@ -5,17 +5,18 @@ metadata:
   namespace: financials-tracker
 data:
   default.conf: |
+    default.conf: |
     server {
         listen  80 default_server;
         listen [::]:80 default_server;
 
-        root /var/www/html;
+        root /var/www/html/public;
 
-        index /public/index.php;
-        error_page 404 /public/index.php;
+        index index.php;
+        error_page 404 index.php;
 
         location / {
-            try_files $uri $uri/ /public/index.php;
+            try_files $uri $uri/ /index.php;
         }
 
         location ~ \.php$ {
