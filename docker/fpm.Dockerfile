@@ -30,14 +30,24 @@ COPY /bootstrap bootstrap
 COPY /config config
 COPY /artisan artisan
 
+FROM node:20-alpine AS assets-build-fpm
+
+WORKDIR /var/www/html
+COPY . /var/www/html/
+
+RUN apk add --no-cache php php-cli php-dom php-intl php-session php-fileinfo php-tokenizer php-xml php-mbstring php-xmlreader php-gd php-simplexml php-xmlwriter composer
+RUN composer install --optimize-autoloader --no-scripts
+
+RUN npm ci
+RUN npm run build
+
 FROM base AS build-fpm
 
 WORKDIR /var/www/html
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY /artisan artisan
-COPY . /var/www/html
-# COPY /composer.json composer.json
+COPY --from=assets-build-fpm /var/www/html /var/www/html
 
 RUN composer install --optimize-autoloader --no-scripts
 
@@ -45,9 +55,6 @@ COPY /bootstrap bootstrap
 COPY /app app
 COPY /config config
 COPY /routes routes
-
-
-# COPY . /var/www/html
 
 RUN composer dump-autoload -o --no-scripts
 
