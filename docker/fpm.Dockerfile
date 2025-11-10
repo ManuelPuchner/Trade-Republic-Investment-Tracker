@@ -28,8 +28,8 @@ COPY . /var/www/html/
 RUN apk add --no-cache php php-cli php-dom php-intl php-session php-fileinfo php-tokenizer php-xml php-mbstring php-xmlreader php-gd php-simplexml php-xmlwriter composer
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-RUN npm ci
-RUN npm run build
+# Assets are pre-built by GitHub Actions, just ensure build directory exists
+RUN mkdir -p /var/www/html/public && mv /var/www/html/build /var/www/html/public/ || true
 
 FROM base AS dev
 
@@ -47,7 +47,7 @@ WORKDIR /var/www/html
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY /artisan artisan
 COPY . /var/www/html
-COPY --from=assets-build /var/www/html/build /var/www/html/public/build
+COPY --from=assets-build /var/www/html/public/build /var/www/html/public/build
 # COPY /composer.json composer.json
 
 RUN composer install --optimize-autoloader --no-scripts

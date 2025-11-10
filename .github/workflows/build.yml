@@ -41,6 +41,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+
       - name: Build and push Nginx image
         uses: docker/build-push-action@v5
         with:
