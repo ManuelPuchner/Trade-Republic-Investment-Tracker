@@ -2,15 +2,15 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: web-application-svc
-  name: web-application-svc
+    app: financials-tracker
+  name: financials-tracker-service
+  namespace: financials-tracker
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
-    app: web-application
+    app: financials-tracker
   ports:
     - name: targetport
       port: 80
       protocol: TCP
       targetPort: 80
-      nodePort: 30007

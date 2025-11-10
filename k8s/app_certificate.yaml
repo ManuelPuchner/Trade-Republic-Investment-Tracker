@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: financials-tracker-tls
+  namespace: financials-tracker
+spec:
+  secretName: financials-tracker-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - financials-tracker.manuelpuchner.duckdns.org

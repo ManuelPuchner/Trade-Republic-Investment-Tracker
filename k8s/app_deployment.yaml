@@ -1,16 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-application
+  name: financials-tracker-deployment
+  namespace: financials-tracker
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: web-application
+      app: financials-tracker
   template:
     metadata:
       labels:
-        app: web-application
+        app: financials-tracker
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/path: /metrics
@@ -29,9 +30,9 @@ spec:
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
-                name: application-config
+                name: financials-tracker-config
             - secretRef:
-                name: application-secret
+                name: financials-tracker-secret
           command:
             - "php"
           args:
@@ -53,9 +54,9 @@ spec:
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
-                name: application-config
+                name: financials-tracker-config
             - secretRef:
-                name: application-secret
+                name: financials-tracker-secret
           securityContext:
             runAsUser: 82
             readOnlyRootFilesystem: true
