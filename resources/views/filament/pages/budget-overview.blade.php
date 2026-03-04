@@ -307,4 +307,96 @@
             </a>
         </div>
     @endif
+
+    <!-- Transactions by Category -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden dark:bg-gray-900 border border-gray-100 dark:border-gray-800">
+        <div class="px-6 py-5 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 dark:from-gray-800 dark:to-gray-900 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+                    <x-heroicon-o-arrow-trending-down class="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" />
+                    Transaktionen nach Kategorie
+                </h2>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</label>
+                    <select wire:model.live="transactionFilter" class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="all">Alle</option>
+                        <option value="ausgabe">Ausgaben</option>
+                        <option value="einzahlung">Einzahlungen</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        @php
+            $transactions = $this->getTransactionsByCategory();
+        @endphp
+
+        @if ($transactions->count() > 0)
+            <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                @foreach ($transactions as $categoryGroup)
+                    <div class="px-6 py-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+                                {{ $categoryGroup['category'] }}
+                            </h3>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
+                                {{ $categoryGroup['count'] }} Transaktionen
+                            </span>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 dark:bg-gray-800">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Datum</th>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Kategorie</th>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-300">Unterkategorie</th>
+                                        <th class="px-4 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-300">Betrag</th>
+                                        <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300">Anzahl</th>
+                                        <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700 dark:text-gray-300">Typ</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                                    @foreach ($categoryGroup['transactions'] as $transaction)
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                                            <td class="px-4 py-2 text-gray-900 dark:text-gray-100">{{ $transaction['date'] }}</td>
+                                            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">{{ $transaction['category'] }}</td>
+                                            <td class="px-4 py-2 text-gray-600 dark:text-gray-400">{{ $transaction['subcategory'] }}</td>
+                                            <td class="px-4 py-2 text-right font-semibold {{ in_array($transaction['type'], ['Kauf', 'Ausgabe', 'Saveback Steuer', 'Steuer (Ausschüttung/Ausschüttungsgleicher Ertrag)']) ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400' }}">
+                                                {{ number_format($transaction['amount'], 2, ',', '.') }} €
+                                            </td>
+                                            <td class="px-4 py-2 text-center text-gray-600 dark:text-gray-400">
+                                                @if ($transaction['count'] > 1)
+                                                    {{ $transaction['count'] }}x
+                                                @else
+                                                    1x
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-2 text-center">
+                                                <span class="inline-flex px-2 py-1 rounded text-xs font-semibold {{ in_array($transaction['type'], ['Kauf', 'Ausgabe', 'Saveback Steuer', 'Steuer (Ausschüttung/Ausschüttungsgleicher Ertrag)']) ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' }}">
+                                                    {{ $transaction['type'] }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot class="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                                    <tr>
+                                        <td colspan="3" class="px-4 py-2 font-semibold text-gray-900 dark:text-white">Gesamt {{ $categoryGroup['category'] }}:</td>
+                                        <td class="px-4 py-2 text-right font-bold text-gray-900 dark:text-white">{{ number_format($categoryGroup['total'], 2, ',', '.') }} €</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="px-6 py-12 text-center">
+                <x-heroicon-o-inbox class="mx-auto h-16 w-16 text-gray-300 dark:text-gray-600" />
+                <p class="mt-4 text-gray-600 dark:text-gray-400 text-lg font-medium">Keine Transaktionen für den ausgewählten Zeitraum und Filter vorhanden.</p>
+            </div>
+        @endif
+    </div>
 </div>

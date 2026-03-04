@@ -24,20 +24,45 @@ class Transaction extends Model
         'amount' => 'decimal:2',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Ensure Kauf transactions always have Investment category
+        static::creating(function ($model) {
+            if ($model->type && $model->type->name === 'Kauf') {
+                $investmentCategory = Category::firstOrCreate(
+                    ['name' => 'Investment'],
+                    ['is_income_category' => false]
+                );
+                $model->category_id = $investmentCategory->id;
+            }
+        });
+
+        static::updating(function ($model) {
+            if ($model->type && $model->type->name === 'Kauf') {
+                $investmentCategory = Category::firstOrCreate(
+                    ['name' => 'Investment'],
+                    ['is_income_category' => false]
+                );
+                $model->category_id = $investmentCategory->id;
+            }
+        });
+    }
+
     /**
      * Scope to add id as secondary sort if not already sorting by id
      */
     public function scopeWithSecondaryIdSort($query)
     {
         $orders = $query->getQuery()->orders ?? [];
-        $hasIdOrder = collect($orders)->contains(fn($order) => 
-            isset($order['column']) && $order['column'] === 'id'
+        $hasIdOrder = collect($orders)->contains(fn ($order) => isset($order['column']) && $order['column'] === 'id'
         );
-        
-        if (!$hasIdOrder) {
+
+        if (! $hasIdOrder) {
             $query->orderBy('id', 'desc');
         }
-        
+
         return $query;
     }
 
@@ -91,7 +116,7 @@ class Transaction extends Model
      */
     public function isTransfer(): bool
     {
-        return !is_null($this->to_account_id);
+        return ! is_null($this->to_account_id);
     }
 
     /**

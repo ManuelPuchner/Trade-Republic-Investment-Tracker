@@ -77,13 +77,26 @@ class Budget extends Model
 
     /**
      * Get spent amount for this budget category
+     * Includes all minus transaction types: Ausgabe, Kauf, Saveback Steuer, Steuer (Ausschüttung/Ausschüttungsgleicher Ertrag)
+     * 
+     * Uses the provided period/month/year from the UI, not the budget's stored month/year
+     * (which are kept for backward compatibility but are not used for calculations)
+     * 
+     * @param string $period The period type (monthly, quarterly, yearly)
+     * @param int $month The month to filter by
+     * @param int $year The year to filter by
      */
-    public function getSpentAmount()
+    public function getSpentAmount($period, $month, $year)
     {
         return Transaction::where('category_id', $this->category_id)
-            ->filterByPeriod($this->period, $this->month, $this->year)
+            ->filterByPeriod($period, $month, $year)
             ->whereHas('type', function ($query) {
-                $query->where('name', 'Ausgabe');
+                $query->whereIn('name', [
+                    'Ausgabe',
+                    'Kauf',
+                    'Saveback Steuer',
+                    'Steuer (Ausschüttung/Ausschüttungsgleicher Ertrag)',
+                ]);
             })
             ->sum('amount');
     }
@@ -91,12 +104,12 @@ class Budget extends Model
     /**
      * Get percentage of budget spent
      */
-    public function getSpentPercentage()
+    public function getSpentPercentage($period, $month, $year)
     {
         if ($this->amount == 0) {
             return 0;
         }
-        $spent = $this->getSpentAmount();
+        $spent = $this->getSpentAmount($period, $month, $year);
 
         return round(($spent / $this->amount) * 100, 2);
     }
@@ -104,9 +117,9 @@ class Budget extends Model
     /**
      * Get remaining budget
      */
-    public function getRemainingAmount()
+    public function getRemainingAmount($period, $month, $year)
     {
-        return $this->amount - $this->getSpentAmount();
+        return $this->amount - $this->getSpentAmount($period, $month, $year);
     }
 
     /**

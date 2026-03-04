@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Budget;
+use App\Models\Transaction;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Pages\Page;
@@ -28,6 +29,8 @@ class BudgetOverview extends Page
 
     public string $selectedPeriod = 'monthly';
 
+    public string $transactionFilter = 'all'; // 'all', 'ausgabe', 'einzahlung
+
     public function mount(): void
     {
         $this->selectedMonth = now()->month;
@@ -48,9 +51,9 @@ class BudgetOverview extends Page
             })
             ->get()
             ->map(function (Budget $budget) {
-                $spent = $budget->getSpentAmount();
-                $percentage = $budget->getSpentPercentage();
-                $remaining = $budget->getRemainingAmount();
+                $spent = $budget->getSpentAmount($this->selectedPeriod, $this->selectedMonth, $this->selectedYear);
+                $percentage = $budget->getSpentPercentage($this->selectedPeriod, $this->selectedMonth, $this->selectedYear);
+                $remaining = $budget->getRemainingAmount($this->selectedPeriod, $this->selectedMonth, $this->selectedYear);
 
                 return [
                     'id' => $budget->id,
@@ -134,5 +137,59 @@ class BudgetOverview extends Page
                 ];
             })
             ->sortByDesc('spent');
+    }
+
+    public function getTransactionsByCategory(): Collection
+    {
+        $date = Carbon::createFromDate($this->selectedYear, $this->selectedMonth, 1);
+        $query = Transaction::with(['category', 'type'])
+            ->whereHas('category', function ($q) {
+               
+            })
+            ->filterByPeriod($this->selectedPeriod, $this->selectedMonth, $this->selectedYear);
+
+        // Filter by transaction type if selected
+        if ($this->transactionFilter === 'ausgabe') {
+            $query->whereHas('type', function ($q) {
+                $q->where('name', 'Ausgabe');
+            });
+        } elseif ($this->transactionFilter === 'einzahlung' || $this->transactionFilter === 'einzahlungen') {
+            $query->whereHas('type', function ($q) {
+                $q->where('name', 'Einnahme');
+            });
+        }
+
+        return $query->get()
+            ->groupBy(function ($transaction) {
+                return $transaction->category->category ?? 'Sonstiges';
+            })
+            ->map(function ($items, $categoryName) {
+                // Group transactions by the actual category name (subcategory/name)
+                $groupedByName = $items->groupBy(function ($trans) {
+                    return $trans->category->name;
+                });
+
+                // Create summary rows for each unique category name
+                $transactions = $groupedByName->map(function ($nameGroup, $categoryName) {
+                    return [
+                        'category' => $categoryName,
+                        'subcategory' => $nameGroup->first()->category->subcategory ?? $categoryName,
+                        'name' => $categoryName,
+                        'amount' => (float) $nameGroup->sum('amount'),
+                        'date' => $nameGroup->sortByDesc('date')->first()->date->format('d.m.Y'),
+                        'type' => $nameGroup->first()->type->name ?? 'Unbekannt',
+                        'notes' => '-',
+                        'count' => $nameGroup->count(),
+                    ];
+                })->sortByDesc('amount')->values();
+
+                return [
+                    'category' => $categoryName,
+                    'transactions' => $transactions,
+                    'total' => $items->sum('amount'),
+                    'count' => $items->count(),
+                ];
+            })
+            ->sortByDesc('total');
     }
 }

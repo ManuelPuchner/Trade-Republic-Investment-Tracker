@@ -39,7 +39,22 @@ class TransactionForm
                         // Clear dependent fields when type changes
                         $set('to_account_id', null);
                         $set('entity_id', null);
-                        $set('category_id', null);
+                        
+                        // For Kauf type, automatically set category to Investment
+                        if ($state) {
+                            $type = TransactionType::find($state);
+                            if ($type && $type->name === 'Kauf') {
+                                $investmentCategory = Category::where('name', 'Investment')->first();
+                                if ($investmentCategory) {
+                                    $set('category_id', $investmentCategory->id);
+                                }
+                            } else {
+                                // For non-Kauf types, clear the category
+                                $set('category_id', null);
+                            }
+                        } else {
+                            $set('category_id', null);
+                        }
                     })
                     ->columnSpan(1),
 
@@ -255,7 +270,7 @@ class TransactionForm
                     })
                     ->columnSpan(2),
 
-                // Step 6: Category (for expenses/income, not for investments)
+                // Step 6: Category (for expenses/income, and for Kauf transactions)
                 Select::make('category_id')
                     ->label('Kategorie')
                     ->relationship('category', 'name')
@@ -283,8 +298,24 @@ class TransactionForm
                         }
 
                         // Show for Ausgabe and Einzahlung (non-investment transactions)
+                        // Show for Kauf (investment transactions can be categorized)
                         // Hide for Transfer (not needed for transfers between accounts)
-                        return in_array($type->name, ['Ausgabe', 'Einzahlung', 'Einzahlungen']);
+                        return in_array($type->name, ['Ausgabe', 'Einzahlung', 'Kauf']);
+                    })
+                    ->default(function ($get) {
+                        $typeId = $get('transaction_type_id');
+                        if (! $typeId) {
+                            return null;
+                        }
+
+                        $type = TransactionType::find($typeId);
+                        if (! $type || $type->name !== 'Kauf') {
+                            return null;
+                        }
+
+                        // Default to Investment category for Kauf type
+                        $investmentCategory = Category::where('name', 'Investment')->first();
+                        return $investmentCategory?->id;
                     })
                     ->columnSpan(2),
 
