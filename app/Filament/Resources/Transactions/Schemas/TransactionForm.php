@@ -284,7 +284,7 @@ class TransactionForm
 
                         // Show for Ausgabe and Einzahlung (non-investment transactions)
                         // Hide for Transfer (not needed for transfers between accounts)
-                        return in_array($type->name, ['Ausgabe', 'Einzahlung']);
+                        return in_array($type->name, ['Ausgabe', 'Einzahlungen']);
                     })
                     ->columnSpan(2),
 

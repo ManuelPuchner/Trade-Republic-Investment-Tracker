@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
 
 class Transaction extends Model
 {
@@ -109,5 +108,46 @@ class Transaction extends Model
     public function scopeTransfers($query)
     {
         return $query->whereNotNull('to_account_id');
+    }
+
+    /**
+     * Scope for filtering transactions by period
+     */
+    public function scopeFilterByPeriod($query, $period, $month = null, $year = null)
+    {
+        $now = now();
+        $startDate = null;
+        $endDate = null;
+
+        if ($year === null) {
+            $year = $now->year;
+        }
+
+        switch ($period) {
+            case 'monthly':
+                if ($month === null) {
+                    $month = $now->month;
+                }
+                $startDate = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+                $endDate = $startDate->copy()->endOfMonth();
+                break;
+
+            case 'quarterly':
+                if ($month === null) {
+                    $month = $now->month;
+                }
+                $quarter = ceil($month / 3);
+                $startMonth = ($quarter - 1) * 3 + 1;
+                $startDate = \Carbon\Carbon::createFromDate($year, $startMonth, 1);
+                $endDate = $startDate->copy()->addMonths(2)->endOfMonth();
+                break;
+
+            case 'yearly':
+                $startDate = \Carbon\Carbon::createFromDate($year, 1, 1)->startOfYear();
+                $endDate = $startDate->copy()->endOfYear();
+                break;
+        }
+
+        return $query->whereBetween('date', [$startDate, $endDate]);
     }
 }

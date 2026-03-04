@@ -13,6 +13,13 @@ class Category extends Model
         'color',
         'icon',
         'description',
+        'category',
+        'subcategory',
+        'is_income_category',
+    ];
+
+    protected $casts = [
+        'is_income_category' => 'boolean',
     ];
 
     protected static function boot()
@@ -29,5 +36,26 @@ class Category extends Model
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function budgets()
+    {
+        return $this->hasMany(Budget::class);
+    }
+
+    /**
+     * Scope for expense categories only
+     */
+    public function scopeExpenseCategories($query)
+    {
+        return $query->where('is_income_category', false);
+    }
+
+    /**
+     * Scope for income categories only
+     */
+    public function scopeIncomeCategories($query)
+    {
+        return $query->where('is_income_category', true);
     }
 }

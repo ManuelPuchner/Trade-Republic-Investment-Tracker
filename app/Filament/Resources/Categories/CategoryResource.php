@@ -11,12 +11,17 @@ use BackedEnum;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColorColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\DeleteBulkAction;
@@ -39,39 +44,73 @@ class CategoryResource extends Resource
     {
         return $schema
             ->components([
-                TextInput::make('name')
-                    ->label('Name')
-                    ->required()
-                    ->maxLength(255)
-                    ->prefixIcon('heroicon-o-tag')
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(fn ($state, $set) => $set('slug', \Illuminate\Support\Str::slug($state))),
-                
-                TextInput::make('slug')
-                    ->label('Slug')
-                    ->required()
-                    ->maxLength(255)
-                    ->unique(ignoreRecord: true)
-                    ->prefixIcon('heroicon-o-hashtag'),
-                
-                ColorPicker::make('color')
-                    ->label('Farbe')
-                    ->nullable(),
-                
-                TextInput::make('icon')
-                    ->label('Icon')
-                    ->placeholder('heroicon-o-tag')
-                    ->helperText('Heroicon name, z.B. heroicon-o-shopping-cart')
-                    ->nullable()
-                    ->prefixIcon('heroicon-o-sparkles'),
-                
-                Textarea::make('description')
-                    ->label('Beschreibung')
-                    ->rows(3)
-                    ->columnSpanFull()
-                    ->nullable(),
-            ])
-            ->columns(2);
+                Section::make('Grundinformationen')
+                    ->description('Basis-Informationen für die Kategorie')
+                    ->icon('heroicon-o-tag')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('name')
+                            ->label('Name')
+                            ->required()
+                            ->maxLength(255)
+                            ->prefixIcon('heroicon-o-tag')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($state, $set) => $set('slug', \Illuminate\Support\Str::slug($state))),
+                        
+                        TextInput::make('slug')
+                            ->label('Slug')
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(ignoreRecord: true)
+                            ->prefixIcon('heroicon-o-hashtag'),
+                        
+                        ColorPicker::make('color')
+                            ->label('Farbe')
+                            ->nullable(),
+                        
+                        TextInput::make('icon')
+                            ->label('Icon')
+                            ->placeholder('heroicon-o-tag')
+                            ->helperText('Heroicon name, z.B. heroicon-o-shopping-cart')
+                            ->nullable()
+                            ->prefixIcon('heroicon-o-sparkles'),
+                        
+                        Textarea::make('description')
+                            ->label('Beschreibung')
+                            ->rows(3)
+                            ->columnSpanFull()
+                            ->nullable(),
+                    ]),
+
+                Section::make('Budget-Zuordnung')
+                    ->description('Kategorisierung für Budget-Tracking')
+                    ->icon('heroicon-o-banknotes')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('category')
+                            ->label('Hauptkategorie')
+                            ->placeholder('z.B. Wohnen, Transport, Lebensmittel')
+                            ->helperText('Wird für die Gruppierung in der Budget-Übersicht verwendet')
+                            ->maxLength(255)
+                            ->nullable()
+                            ->prefixIcon('heroicon-o-folder'),
+                        
+                        TextInput::make('subcategory')
+                            ->label('Unterkategorie')
+                            ->placeholder('z.B. Miete, Benzin, Einkaufen')
+                            ->helperText('Detaillierte Unterkategorisierung')
+                            ->maxLength(255)
+                            ->nullable()
+                            ->prefixIcon('heroicon-o-folder-open'),
+                        
+                        Toggle::make('is_income_category')
+                            ->label('Einnahmen-Kategorie')
+                            ->helperText('Aktivieren, wenn dies eine Kategorie für Einnahmen ist (z.B. Gehalt, Bonus)')
+                            ->default(false)
+                            ->inline(false)
+                            ->columnSpanFull(),
+                    ]),
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -85,15 +124,40 @@ class CategoryResource extends Resource
                     ->weight('bold')
                     ->icon(fn ($record) => $record->icon ?? 'heroicon-o-tag'),
                 
+                TextColumn::make('category')
+                    ->label('Hauptkategorie')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('info')
+                    ->placeholder('–'),
+                
+                TextColumn::make('subcategory')
+                    ->label('Unterkategorie')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('–')
+                    ->toggleable(),
+                
+                IconColumn::make('is_income_category')
+                    ->label('Einnahme')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-arrow-trending-up')
+                    ->falseIcon('heroicon-o-arrow-trending-down')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->alignCenter(),
+                
                 ColorColumn::make('color')
                     ->label('Farbe')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 
                 TextColumn::make('slug')
                     ->label('Slug')
                     ->searchable()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 
                 TextColumn::make('transactions_count')
                     ->label('Transaktionen')
@@ -101,6 +165,13 @@ class CategoryResource extends Resource
                     ->sortable()
                     ->icon('heroicon-o-currency-dollar')
                     ->color('info'),
+                
+                TextColumn::make('budgets_count')
+                    ->label('Budgets')
+                    ->counts('budgets')
+                    ->sortable()
+                    ->icon('heroicon-o-banknotes')
+                    ->color('warning'),
                 
                 TextColumn::make('description')
                     ->label('Beschreibung')
@@ -114,7 +185,20 @@ class CategoryResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                TernaryFilter::make('is_income_category')
+                    ->label('Kategorie-Typ')
+                    ->placeholder('Alle Kategorien')
+                    ->trueLabel('Nur Einnahmen')
+                    ->falseLabel('Nur Ausgaben')
+                    ->native(false),
+                
+                SelectFilter::make('category')
+                    ->label('Hauptkategorie')
+                    ->options(fn () => Category::whereNotNull('category')
+                        ->distinct()
+                        ->pluck('category', 'category')
+                        ->toArray())
+                    ->native(false),
             ])
             ->recordActions([
                 ViewAction::make(),
