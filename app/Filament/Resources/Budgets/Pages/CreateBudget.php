@@ -12,11 +12,11 @@ class CreateBudget extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Ensure required fields based on period
-        if ($data['period'] !== 'yearly' && !$data['month']) {
+        if ($data['period'] !== 'yearly' && ! $data['month']) {
             $data['month'] = now()->month;
         }
-        
-        if (!$data['year']) {
+
+        if (! $data['year']) {
             $data['year'] = now()->year;
         }
 

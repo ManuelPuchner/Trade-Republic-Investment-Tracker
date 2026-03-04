@@ -2,8 +2,9 @@
 
 namespace App\Filament\Pages;
 
-use BackedEnum;
 use App\Models\Budget;
+use BackedEnum;
+use Carbon\Carbon;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
@@ -22,7 +23,9 @@ class BudgetOverview extends Page
     protected static string|UnitEnum|null $navigationGroup = 'Finanz Management';
 
     public ?int $selectedMonth = null;
+
     public ?int $selectedYear = null;
+
     public string $selectedPeriod = 'monthly';
 
     public function mount(): void
@@ -33,12 +36,16 @@ class BudgetOverview extends Page
 
     public function getBudgetData(): Collection
     {
-        return Budget::with('budgetCategory')
+        // Create a date from the selected month/year for activeOn scope
+        $date = Carbon::createFromDate($this->selectedYear, $this->selectedMonth, 1);
+
+        return Budget::with('category')
             ->where('period', $this->selectedPeriod)
-            ->when($this->selectedPeriod !== 'yearly', function ($query) {
-                return $query->where('month', $this->selectedMonth);
+            ->activeOn($date)
+            // Nur Budgets mit Ausgaben-Kategorien anzeigen
+            ->whereHas('category', function ($query) {
+                $query->where('is_income_category', false);
             })
-            ->where('year', $this->selectedYear)
             ->get()
             ->map(function (Budget $budget) {
                 $spent = $budget->getSpentAmount();
@@ -47,9 +54,9 @@ class BudgetOverview extends Page
 
                 return [
                     'id' => $budget->id,
-                    'name' => $budget->budgetCategory->name,
-                    'subcategory' => $budget->budgetCategory->subcategory,
-                    'category' => $budget->budgetCategory->category,
+                    'name' => $budget->category->name,
+                    'subcategory' => $budget->category->subcategory ?? $budget->category->name,
+                    'category' => $budget->category->category ?? 'Sonstiges',
                     'budget' => (float) $budget->amount,
                     'spent' => (float) $spent,
                     'remaining' => (float) $remaining,
@@ -65,8 +72,26 @@ class BudgetOverview extends Page
     {
         $budgets = $this->getBudgetData();
 
+        // Einnahmen und Ausgaben aus Transaktionen holen
+        $totalIncome = Budget::getTotalIncome(
+            $this->selectedPeriod,
+            $this->selectedMonth,
+            $this->selectedYear
+        );
+
+        $totalExpenses = Budget::getTotalExpenses(
+            $this->selectedPeriod,
+            $this->selectedMonth,
+            $this->selectedYear
+        );
+
+        $availableBudget = $totalIncome - $totalExpenses;
+
         if ($budgets->isEmpty()) {
             return [
+                'total_income' => $totalIncome,
+                'total_expenses' => $totalExpenses,
+                'available_budget' => $availableBudget,
                 'total_budget' => 0,
                 'total_spent' => 0,
                 'total_remaining' => 0,
@@ -80,6 +105,9 @@ class BudgetOverview extends Page
         $overall_percentage = $total_budget > 0 ? round(($total_spent / $total_budget) * 100, 2) : 0;
 
         return [
+            'total_income' => $totalIncome,
+            'total_expenses' => $totalExpenses,
+            'available_budget' => $availableBudget,
             'total_budget' => $total_budget,
             'total_spent' => $total_spent,
             'total_remaining' => $total_remaining,

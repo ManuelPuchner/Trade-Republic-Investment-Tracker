@@ -26,7 +26,7 @@ class BudgetResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'id';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Budget';
+    protected static string|UnitEnum|null $navigationGroup = 'Finanz Management';
 
     protected static ?int $navigationSort = 1;
 
