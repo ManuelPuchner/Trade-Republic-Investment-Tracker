@@ -8,24 +8,24 @@ use App\Filament\Resources\Categories\Pages\ListCategories;
 use App\Filament\Resources\Categories\Pages\ViewCategory;
 use App\Models\Category;
 use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\ColorPicker;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ColorColumn;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\BulkActionGroup;
+use Filament\Tables\Table;
 use UnitEnum;
 
 class CategoryResource extends Resource
@@ -56,25 +56,25 @@ class CategoryResource extends Resource
                             ->prefixIcon('heroicon-o-tag')
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn ($state, $set) => $set('slug', \Illuminate\Support\Str::slug($state))),
-                        
+
                         TextInput::make('slug')
                             ->label('Slug')
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->prefixIcon('heroicon-o-hashtag'),
-                        
+
                         ColorPicker::make('color')
                             ->label('Farbe')
                             ->nullable(),
-                        
+
                         TextInput::make('icon')
                             ->label('Icon')
                             ->placeholder('heroicon-o-tag')
                             ->helperText('Heroicon name, z.B. heroicon-o-shopping-cart')
                             ->nullable()
                             ->prefixIcon('heroicon-o-sparkles'),
-                        
+
                         Textarea::make('description')
                             ->label('Beschreibung')
                             ->rows(3)
@@ -94,7 +94,7 @@ class CategoryResource extends Resource
                             ->maxLength(255)
                             ->nullable()
                             ->prefixIcon('heroicon-o-folder'),
-                        
+
                         TextInput::make('subcategory')
                             ->label('Unterkategorie')
                             ->placeholder('z.B. Miete, Benzin, Einkaufen')
@@ -102,7 +102,7 @@ class CategoryResource extends Resource
                             ->maxLength(255)
                             ->nullable()
                             ->prefixIcon('heroicon-o-folder-open'),
-                        
+
                         Toggle::make('is_income_category')
                             ->label('Einnahmen-Kategorie')
                             ->helperText('Aktivieren, wenn dies eine Kategorie für Einnahmen ist (z.B. Gehalt, Bonus)')
@@ -123,7 +123,7 @@ class CategoryResource extends Resource
                     ->sortable()
                     ->weight('bold')
                     ->icon(fn ($record) => $record->icon ?? 'heroicon-o-tag'),
-                
+
                 TextColumn::make('category')
                     ->label('Hauptkategorie')
                     ->searchable()
@@ -131,14 +131,14 @@ class CategoryResource extends Resource
                     ->badge()
                     ->color('info')
                     ->placeholder('–'),
-                
+
                 TextColumn::make('subcategory')
                     ->label('Unterkategorie')
                     ->searchable()
                     ->sortable()
                     ->placeholder('–')
                     ->toggleable(),
-                
+
                 IconColumn::make('is_income_category')
                     ->label('Einnahme')
                     ->boolean()
@@ -147,37 +147,37 @@ class CategoryResource extends Resource
                     ->trueColor('success')
                     ->falseColor('danger')
                     ->alignCenter(),
-                
+
                 ColorColumn::make('color')
                     ->label('Farbe')
                     ->sortable()
                     ->toggleable(),
-                
+
                 TextColumn::make('slug')
                     ->label('Slug')
                     ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                
+
                 TextColumn::make('transactions_count')
                     ->label('Transaktionen')
                     ->counts('transactions')
                     ->sortable()
                     ->icon('heroicon-o-currency-dollar')
                     ->color('info'),
-                
+
                 TextColumn::make('budgets_count')
                     ->label('Budgets')
                     ->counts('budgets')
                     ->sortable()
                     ->icon('heroicon-o-banknotes')
                     ->color('warning'),
-                
+
                 TextColumn::make('description')
                     ->label('Beschreibung')
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
-                
+
                 TextColumn::make('created_at')
                     ->label('Erstellt am')
                     ->dateTime()
@@ -191,7 +191,7 @@ class CategoryResource extends Resource
                     ->trueLabel('Nur Einnahmen')
                     ->falseLabel('Nur Ausgaben')
                     ->native(false),
-                
+
                 SelectFilter::make('category')
                     ->label('Hauptkategorie')
                     ->options(fn () => Category::whereNotNull('category')
