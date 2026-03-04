@@ -14,6 +14,10 @@ data:
         index index.php;
         error_page 404 index.php;
 
+        location = / {
+            return 302 /admin;
+        }
+
         location / {
             try_files $uri $uri/ /index.php;
         }
